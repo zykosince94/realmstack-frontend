@@ -53,6 +53,15 @@ npm run dev
 
 Open <http://localhost:5173>. Vite proxies `/v1` requests to `http://localhost:8080` by default; set `VITE_API_PROXY_TARGET` if the API runs elsewhere. `VITE_*` values are shipped to the browser and must never contain server credentials or signing secrets.
 
+Checks (the same ones CI runs in `.github/workflows/ci.yml`):
+
+```powershell
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
 ## Repositories and learning guides
 
 - Backend repo: `../realmstack-backend/` — run Go tests with `go test ./...` and `go vet ./...`.
