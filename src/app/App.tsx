@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, Award, Boxes, Flag, Gamepad2, Gauge, LogOut, Plus, ScrollText, ShieldCheck, Trophy, Users, Wallet } from "lucide-react";
+import { Activity, Award, Boxes, Flag, Gamepad2, Gauge, LogOut, Plus, ScrollText, ShieldCheck, Sparkles, Trophy, Users, Wallet } from "lucide-react";
 import { authHeaders, client, unwrap } from "../api/client";
 import { describeError, isExpiredSession } from "../api/errors";
 import type { Environment, Project } from "../api/types";
@@ -20,6 +20,8 @@ import { Settings } from "../features/settings/Settings";
 
 // The quest editor pulls in React Flow, dagre and dnd-kit; load it only when opened.
 const QuestsScreen = lazy(() => import("../features/quests/QuestsScreen"));
+// AI is optional; its screen is loaded only when opened.
+const AIAssistant = lazy(() => import("../features/ai-config/AIAssistant"));
 
 const screens = [
   { id: "overview", label: "Overview", icon: Gauge, view: Overview },
@@ -30,6 +32,7 @@ const screens = [
   { id: "stats", label: "Stats & flags", icon: Flag, view: StatsScreen },
   { id: "achievements", label: "Achievements", icon: Award, view: Achievements },
   { id: "quests", label: "Quests", icon: ScrollText, view: QuestsScreen },
+  { id: "ai", label: "AI assistant", icon: Sparkles, view: AIAssistant },
   { id: "settings", label: "Project settings", icon: ShieldCheck, view: Settings },
 ] as const;
 type Screen = (typeof screens)[number]["id"];

@@ -1066,10 +1066,225 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/ai/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signed-in user's AI provider settings. The key is never returned, only its last four characters. 503 AI_UNAVAILABLE when the deployment has no AI_ENCRYPTION_KEY. */
+        get: operations["getAiSettings"];
+        /** Store provider, model and (write-only) API key; the key is encrypted at rest. Omit api_key to change only the model. */
+        put: operations["putAiSettings"];
+        post?: never;
+        /** Remove the stored provider key. */
+        delete: operations["deleteAiSettings"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/ai/settings/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check the stored key and model against the provider. 409 AI_NOT_CONFIGURED; 422 AI_KEY_REJECTED or AI_MODEL_NOT_FOUND; 429 AI_RATE_LIMITED; 502 AI_PROVIDER_UNAVAILABLE. */
+        post: operations["postAiSettingsTest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/ai/generations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The environment's 50 most recent AI generations, newest first. */
+        get: operations["getProjectsByProjectidEnvironmentsByEnvidAiGenerations"];
+        put?: never;
+        /** Start a generation (202). It runs in the background; poll GET .../generations/{id}. A proposal is validated like hand-written configuration and changes nothing until applied. 409 AI_NOT_CONFIGURED; 422 VALIDATION_ERROR; 429 AI_BUSY or RATE_LIMITED. */
+        post: operations["postProjectsByProjectidEnvironmentsByEnvidAiGenerations"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/ai/generations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One generation (poll this while it runs). */
+        get: operations["getProjectsByProjectidEnvironmentsByEnvidAiGenerationsById"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/ai/generations/{id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Human approval: merge a valid proposal into the draft (never publishes). It is re-validated against the current draft. 409 ALREADY_APPLIED or DRAFT_CHANGED; 422 NOT_APPLICABLE or INVALID_CONFIGURATION. */
+        post: operations["postProjectsByProjectidEnvironmentsByEnvidAiGenerationsByIdApply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/ai/generations/{id}/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close a finished, unapplied generation. 409 NOT_DISCARDABLE. */
+        post: operations["postProjectsByProjectidEnvironmentsByEnvidAiGenerationsByIdDiscard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/configurations/versions/{version}/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Republish an earlier version as a new version (history is never rewritten) and reset the draft to it, keeping editor_layout. 422 INVALID_CONFIGURATION if it breaks today's rules. */
+        post: operations["postProjectsByProjectidEnvironmentsByEnvidConfigurationsVersionsByVersionRollback"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AISettings: {
+            configured: boolean;
+            provider: string | null;
+            model: string | null;
+            /** @description The last four characters of the stored key; the key itself is never returned. */
+            key_last4: string | null;
+            /** Format: date-time */
+            updated_at: string | null;
+            providers: string[];
+        };
+        AISettingsInput: {
+            /** @enum {string} */
+            provider: "openai";
+            /** @description Provider model ID, e.g. gpt-5.5. */
+            model: string;
+            /** @description Write-only. Required the first time; omit to keep the stored key. */
+            api_key?: string;
+        };
+        AISettingsTest: {
+            ok: boolean;
+            provider: string;
+            model: string;
+        };
+        /** @description The person's brief. Each operation uses the fields that apply to it; defaults fill the rest. */
+        AIParams: {
+            brief?: string;
+            count?: number;
+            levels?: number;
+            /** @enum {string} */
+            pacing?: "gentle" | "steady" | "steep";
+            /** @enum {string} */
+            quest_type?: "story" | "side" | "daily" | "weekly" | "event";
+            stage_count?: number;
+            question?: string;
+        };
+        AIGenerationRequest: {
+            /** @enum {string} */
+            operation: "items" | "economy" | "progression" | "achievements" | "quests" | "explain" | "tests";
+            params?: components["schemas"]["AIParams"];
+            /**
+             * @description add rejects keys that already exist in the draft; replace overwrites them.
+             * @default add
+             * @enum {string}
+             */
+            merge_policy: "add" | "replace";
+        };
+        AIProposal: {
+            items?: components["schemas"]["ItemDefinition"][];
+            currencies?: components["schemas"]["CurrencyDefinition"][];
+            progression?: number[];
+            stats?: components["schemas"]["StatDefinition"][];
+            achievements?: components["schemas"]["AchievementDefinition"][];
+            quests?: components["schemas"]["QuestDefinition"][];
+        };
+        AIGeneration: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            operation: "items" | "economy" | "progression" | "achievements" | "quests" | "explain" | "tests";
+            params: components["schemas"]["AIParams"];
+            /** @enum {string} */
+            merge_policy: "add" | "replace";
+            provider: string;
+            model: string;
+            /** @enum {string} */
+            status: "pending" | "running" | "valid" | "invalid" | "answered" | "failed" | "applied" | "discarded";
+            proposal: components["schemas"]["AIProposal"] | null;
+            /** @description explain: a string; tests: an array of cases; economy: advisory price suggestions. */
+            answer: unknown;
+            notes: string;
+            /** @description Why the proposal is invalid. Paths refer to the merged draft, or proposal.<collection>[i] for key conflicts. */
+            errors: components["schemas"]["FieldError"][];
+            error: {
+                code: string;
+                message: string;
+            } | null;
+            usage: {
+                /** Format: int64 */
+                input_tokens: number;
+                /** Format: int64 */
+                output_tokens: number;
+            };
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            finished_at: string | null;
+            /** Format: date-time */
+            applied_at: string | null;
+            appliable: boolean;
+        };
+        RollbackResult: components["schemas"]["PublishResult"] & {
+            rolled_back_from: number;
+        };
         QuestStage: {
             key: string;
             name: string;
@@ -1692,6 +1907,24 @@ export interface components {
         };
     };
     responses: {
+        /** @description The AI provider failed or could not be reached. */
+        E502: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+        /** @description The AI assistant is not enabled on this deployment. */
+        E503: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
         /** @description Malformed request or missing Idempotency-Key. */
         E400: {
             headers: {
@@ -4576,6 +4809,321 @@ export interface operations {
             401: components["responses"]["E401"];
             404: components["responses"]["E404"];
             409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    getAiSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AISettings"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            503: components["responses"]["E503"];
+        };
+    };
+    putAiSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AISettingsInput"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AISettings"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            422: components["responses"]["E422"];
+            503: components["responses"]["E503"];
+        };
+    };
+    deleteAiSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Deleted"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            503: components["responses"]["E503"];
+        };
+    };
+    postAiSettingsTest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AISettingsTest"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+            429: components["responses"]["E429"];
+            502: components["responses"]["E502"];
+            503: components["responses"]["E503"];
+        };
+    };
+    getProjectsByProjectidEnvironmentsByEnvidAiGenerations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AIGeneration"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            503: components["responses"]["E503"];
+        };
+    };
+    postProjectsByProjectidEnvironmentsByEnvidAiGenerations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AIGenerationRequest"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AIGeneration"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+            429: components["responses"]["E429"];
+            503: components["responses"]["E503"];
+        };
+    };
+    getProjectsByProjectidEnvironmentsByEnvidAiGenerationsById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Generation ID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AIGeneration"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            503: components["responses"]["E503"];
+        };
+    };
+    postProjectsByProjectidEnvironmentsByEnvidAiGenerationsByIdApply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Generation ID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AIGeneration"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+            503: components["responses"]["E503"];
+        };
+    };
+    postProjectsByProjectidEnvironmentsByEnvidAiGenerationsByIdDiscard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Generation ID. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["AIGeneration"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            503: components["responses"]["E503"];
+        };
+    };
+    postProjectsByProjectidEnvironmentsByEnvidConfigurationsVersionsByVersionRollback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description The configuration version number to restore. */
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["RollbackResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
             422: components["responses"]["E422"];
         };
     };

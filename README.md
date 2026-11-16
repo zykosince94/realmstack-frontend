@@ -78,6 +78,8 @@ src/lib/quests.ts            pure quest-graph helpers (loop checks, connect/disc
 src/features/<screen>/       one folder per screen: overview, players, economy, progression,
                              leaderboards, stats, achievements, quests, settings, auth, projects
 src/features/goals/          condition builder and reward picker shared by achievements and quests
+src/features/ai-config/      AI assistant: provider key, generate, review, apply, publish (lazy-loaded)
+src/lib/ai.ts                pure helpers for the AI screen (operations, params, proposal rows)
 src/test/                    fetch mock, shared fixtures, renderApp(), React Flow/matchMedia stand-ins for jsdom
 ```
 
@@ -100,4 +102,4 @@ The Quests screen is loaded lazily (`React.lazy` in `src/app/App.tsx`): React Fl
 - Backend study guide: `../study/realmstack-backend-guide.html` when using the original workspace.
 - RealmStack MVP reference: [`../RealmStack-MVP-Specification.html`](../RealmStack-MVP-Specification.html) when working in the original workspace.
 
-The demo includes project/environment management, player identity, inventory/economy, progression, leaderboards, stats & flags, achievements (card grid, side-panel editor with condition builder and reward picker, inline validation issues, claim statistics, and a player preview with Claim), and quests (React Flow canvas with chain lanes, drag-to-connect prerequisites with loop prevention, auto-arrange, minimap; side panel with drag-to-reorder stages; issue bar; player preview with Accept, Abandon and Claim; a list on narrow screens). AI configuration and the Unity sample are not included yet. This is a local learning/MVP environment, not a production deployment; configure real secrets, HTTPS, backups, monitoring and abuse protection before external use.
+The demo includes project/environment management, player identity, inventory/economy, progression, leaderboards, stats & flags, achievements (card grid, side-panel editor with condition builder and reward picker, inline validation issues, claim statistics, and a player preview with Claim), quests (React Flow canvas with chain lanes, drag-to-connect prerequisites with loop prevention, auto-arrange, minimap; side panel with drag-to-reorder stages; issue bar; player preview with Accept, Abandon and Claim; a list on narrow screens), an optional AI assistant (your own OpenAI key; proposals are validated, applied to the draft only after confirmation, then published), and version history with restore. The Unity sample is not included yet. To enable AI in the Compose stack, set `AI_ENCRYPTION_KEY` in `.env` (see `.env.example`). This is a local learning/MVP environment, not a production deployment; configure real secrets, HTTPS, backups, monitoring and abuse protection before external use.

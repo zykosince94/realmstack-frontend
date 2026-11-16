@@ -361,3 +361,29 @@ label.checkbox input { width: auto; }
 @media (max-width: 900px) {
   .two-fields { grid-template-columns: 1fr; }
 }
+/* Phase 7: AI assistant */
+.ai-layout { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 15px; align-items: start; }
+.ai-side, .ai-main { display: flex; flex-direction: column; gap: 15px; min-width: 0; }
+.generation h3 { display: flex; align-items: center; gap: 8px; }
+.generation-running { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+.generation-notes, .generation-answer { white-space: pre-wrap; color: #c7d3e0; font-size: 13px; line-height: 1.55; }
+.generation-json pre { max-height: 320px; overflow: auto; padding: 12px; border-radius: 8px; background: #0f1926; font-size: 11px; }
+.generation-json summary { color: var(--muted); font-size: 12px; cursor: pointer; }
+.test-cases { display: flex; flex-direction: column; gap: 10px; padding-left: 20px; font-size: 13px; }
+.test-cases p { margin: 4px 0; color: var(--muted); }
+.badge.new, .badge.positive { background: #1d3d36; color: #70e1ce; }
+.badge.replaces, .badge.negative { background: #3a2a1a; color: #f2c88f; }
+.status-pill.valid, .status-pill.answered { background: #1d3d36; color: #70e1ce; }
+.status-pill.invalid, .status-pill.failed { background: #3d1d24; color: #fb9aa3; }
+.status-pill.applied { background: #23305a; color: #9db6ff; }
+.status-pill.pending, .status-pill.running, .status-pill.discarded { background: #24364b; color: #aebdd0; }
+.generation-history { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.link-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 1px solid transparent; border-radius: 8px; background: none; color: var(--white); text-align: left; cursor: pointer; font: inherit; font-size: 13px; }
+.link-row:hover, .link-row.selected { border-color: var(--line); background: var(--panel-raised); }
+.link-row small { color: var(--dim); font-size: 11px; }
+@media (max-width: 1000px) {
+  .ai-layout { grid-template-columns: 1fr; }
+}

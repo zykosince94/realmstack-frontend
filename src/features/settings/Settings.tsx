@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Boxes, KeyRound, Plus, Rocket, ShieldCheck } from "lucide-react";
+import { Boxes, History, KeyRound, Plus, Rocket, RotateCcw, ShieldCheck } from "lucide-react";
 import { authHeaders, client, unwrap } from "../../api/client";
 import type { Config } from "../../api/types";
 import { useWorkspace } from "../../app/workspace";
 import { PageTitle, Panel } from "../../components/ui";
-import { keys, useCredentials, useDraft, useInvalidate } from "../../hooks/queries";
+import { keys, useCredentials, useDraft, useInvalidate, useVersions } from "../../hooks/queries";
 
 export function Settings() {
   const w = useWorkspace();
@@ -13,6 +13,7 @@ export function Settings() {
   const invalidate = useInvalidate();
   const draft = useDraft();
   const credentials = useCredentials();
+  const versions = useVersions();
   const [projectName, setProjectName] = useState(w.project.name);
   const [projectSlug, setProjectSlug] = useState(w.project.slug);
   const [raw, setRaw] = useState("");
@@ -52,6 +53,14 @@ export function Settings() {
       const result = await unwrap(client.POST("/v1/projects/{projectId}/environments/{envId}/configurations/publish", { ...dashboard, params: { path } }), w.token);
       await invalidate.scope();
       w.notify({ kind: "success", message: `Saved and published configuration version ${result.version}.` });
+    });
+  }
+  async function rollback(version: number) {
+    if (!window.confirm(`Restore version ${version}? It is published again as a new version and replaces the current draft. History is kept.`)) return;
+    await w.run(async () => {
+      const result = await unwrap(client.POST("/v1/projects/{projectId}/environments/{envId}/configurations/versions/{version}/rollback", { ...dashboard, params: { path: { ...path, version } } }), w.token);
+      await invalidate.scope();
+      w.notify({ kind: "success", message: `Restored version ${version} as version ${result.version}.` });
     });
   }
   async function createCredential() {
@@ -109,6 +118,16 @@ export function Settings() {
         <div className="connection-row"><span>Environment ID</span><code>{w.environment.id}</code></div>
         <label className="json-label">Configuration draft (JSON)<textarea className="json-editor" spellCheck={false} value={raw} onChange={(event) => setRaw(event.target.value)} /></label>
         <div className="small-note">Edit catalog, progression, leaderboard, stat and achievement definitions together. Give an item a metadata.slot to make it equippable. Saving does not affect live players until you publish.</div>
+      </Panel>
+      <Panel title="Version history" subtitle="Every publish is an immutable version. Restoring one publishes it again as a new version." icon={<History size={18} />}>
+        {versions.isPending ? <p className="empty-text">Loading versions…</p>
+          : (versions.data ?? []).length === 0 ? <p className="empty-text">Nothing published yet.</p>
+          : <div className="credential-list">{(versions.data ?? []).map((v, i) => (
+            <div className="credential-row" key={v.id}><div className="credential-icon"><History size={16} /></div>
+              <div><b>Version {v.version}{i === 0 && <span className="current-label"> LIVE</span>}</b><small>Published {v.published_at}</small></div>
+              {i > 0 && <button className="button secondary" disabled={w.busy} onClick={() => void rollback(v.version)}><RotateCcw size={14} /> Restore</button>}
+            </div>
+          ))}</div>}
       </Panel>
       <Panel title="Server credentials" subtitle="Issue and revoke trusted-server access. Secrets are only shown once." icon={<KeyRound size={18} />}>
         <button className="button secondary" disabled={w.busy} onClick={() => void createCredential()}><Plus size={15} /> Create server credential</button>

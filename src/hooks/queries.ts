@@ -17,6 +17,11 @@ export const keys = {
   credentials: (projectId: string, envId: string) => ["scope", projectId, envId, "credentials"] as const,
   achievementStats: (projectId: string, envId: string) => ["scope", projectId, envId, "achievement-stats"] as const,
   questStats: (projectId: string, envId: string) => ["scope", projectId, envId, "quest-stats"] as const,
+  versions: (projectId: string, envId: string) => ["scope", projectId, envId, "versions"] as const,
+  aiGenerations: (projectId: string, envId: string) => ["scope", projectId, envId, "ai-generations"] as const,
+  aiGeneration: (projectId: string, envId: string, id: string) => ["scope", projectId, envId, "ai-generations", id] as const,
+  // AI settings belong to the dashboard user, not to a project or environment.
+  aiSettings: (token: string) => ["ai-settings", token] as const,
   player: (playerToken: string) => ["player", playerToken] as const,
   playerAchievements: (playerToken: string) => ["player", playerToken, "achievements"] as const,
   playerStats: (playerToken: string) => ["player", playerToken, "stats"] as const,
@@ -98,6 +103,54 @@ export function useQuestStats() {
   });
   useReportError(query.error, "Could not load quest statistics.");
   return query;
+}
+
+/** Published configuration versions, newest first (for rollback). */
+export function useVersions() {
+  const { token, path, projectId, envId } = useScopeParams();
+  const query = useQuery({
+    queryKey: keys.versions(projectId, envId),
+    queryFn: () => unwrap(client.GET("/v1/projects/{projectId}/environments/{envId}/configurations/versions", { params: { path }, headers: authHeaders({ token }) }), token),
+  });
+  useReportError(query.error, "Could not load configuration versions.");
+  return query;
+}
+
+/**
+ * The signed-in user's AI provider settings. A 503 AI_UNAVAILABLE means the assistant
+ * is switched off on this deployment; callers show that state instead of an error, so
+ * it is not retried and not reported.
+ */
+export function useAISettings() {
+  const { token } = useWorkspace();
+  return useQuery({
+    queryKey: keys.aiSettings(token),
+    retry: false,
+    queryFn: () => unwrap(client.GET("/v1/ai/settings", { headers: authHeaders({ token }) }), token),
+  });
+}
+
+export function useAIGenerations(enabled: boolean) {
+  const { token, path, projectId, envId } = useScopeParams();
+  return useQuery({
+    queryKey: keys.aiGenerations(projectId, envId),
+    enabled,
+    queryFn: () => unwrap(client.GET("/v1/projects/{projectId}/environments/{envId}/ai/generations", { params: { path }, headers: authHeaders({ token }) }), token),
+  });
+}
+
+/** Statuses that are still changing; the dashboard polls while a generation has one. */
+export const runningStatuses: readonly string[] = ["pending", "running"];
+
+/** One generation, polled every 1.5 s while it runs (generations run in the background). */
+export function useAIGeneration(id: string | null) {
+  const { token, path, projectId, envId } = useScopeParams();
+  return useQuery({
+    queryKey: keys.aiGeneration(projectId, envId, id ?? ""),
+    enabled: id !== null,
+    refetchInterval: (query) => (query.state.data && runningStatuses.includes(query.state.data.status) ? 1500 : false),
+    queryFn: () => unwrap(client.GET("/v1/projects/{projectId}/environments/{envId}/ai/generations/{id}", { params: { path: { ...path, id: id! } }, headers: authHeaders({ token }) }), token),
+  });
 }
 
 /** The demo player's quest log, as a game client would see it. Disabled until a player signs in. */
