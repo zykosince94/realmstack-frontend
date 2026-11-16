@@ -1188,10 +1188,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/server/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply many trusted writes in one request (grant, credit, xp, stat, flag) across players in the credential's environment. Each entry has its own idempotency_key and runs in its own savepoint: a failing entry is reported and does not roll back the others; entries apply in request order. The response is 200 with a result per entry. 422 BATCH_SIZE above the project's max_batch_entries (default 500); 429 QUOTA_EXCEEDED counts every entry as a write. */
+        post: operations["postServerBatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        BatchEntry: {
+            /** @enum {string} */
+            type: "grant" | "credit" | "xp" | "stat" | "flag";
+            idempotency_key: string;
+            /** Format: uuid */
+            player_id: string;
+            /** @description grant */
+            item_key?: string;
+            /**
+             * Format: int64
+             * @description grant
+             */
+            quantity?: number;
+            /** @description credit */
+            currency_key?: string;
+            /**
+             * Format: int64
+             * @description credit, xp, stat
+             */
+            amount?: number;
+            /** @description stat */
+            stat_key?: string;
+            /** @description flag */
+            flag_key?: string;
+            reason?: string;
+            reference?: string;
+        };
+        BatchRequest: {
+            entries: components["schemas"]["BatchEntry"][];
+        };
+        BatchEntryResult: {
+            index: number;
+            idempotency_key: string;
+            type: string;
+            /** @description The HTTP status the same write would have returned on its own. */
+            status: number;
+            data?: {
+                [key: string]: unknown;
+            };
+            error?: {
+                code: string;
+                message: string;
+            };
+        };
+        BatchResult: {
+            results: components["schemas"]["BatchEntryResult"][];
+            applied: number;
+            failed: number;
+        };
         AISettings: {
             configured: boolean;
             provider: string | null;
@@ -5125,6 +5191,37 @@ export interface operations {
             401: components["responses"]["E401"];
             404: components["responses"]["E404"];
             422: components["responses"]["E422"];
+        };
+    };
+    postServerBatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["BatchResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            422: components["responses"]["E422"];
+            429: components["responses"]["E429"];
         };
     };
 }
