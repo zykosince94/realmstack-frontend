@@ -1,34 +1,16 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Award, EyeOff, Plus, Rocket, Server, UserRound } from "lucide-react";
 import { authHeaders, client, idempotencyKey, unwrap } from "../../api/client";
 import { ApiError } from "../../api/errors";
 import type { AchievementDefinition, PlayerAchievement } from "../../api/types";
 import { useWorkspace } from "../../app/workspace";
 import { NotPublished, PageTitle } from "../../components/ui";
-import { keys, useAchievementStats, useDraft, useInvalidate, usePlayerAchievements, usePublished } from "../../hooks/queries";
+import { useAchievementStats, useDraft, useDraftValidation, useInvalidate, usePlayerAchievements, usePublished } from "../../hooks/queries";
 import { describeCondition, errorsFor, indexesWithErrors, progressPercent } from "../../lib/config";
+import { rewardSummary } from "../goals/GoalFields";
 import { AchievementEditor, catalogFrom } from "./AchievementEditor";
 
 const blank: AchievementDefinition = { key: "", name: "", description: "", hidden: false, claimable_by: "player", conditions: [{ type: "xp_total", target: 100 }], rewards: {} };
-
-function rewardSummary(a: AchievementDefinition): string {
-  const parts = [
-    ...(a.rewards?.items ?? []).map((r) => `${r.quantity} × ${r.item_key}`),
-    ...(a.rewards?.currencies ?? []).map((r) => `${r.amount} ${r.currency_key}`),
-    ...(a.rewards?.xp ? [`${a.rewards.xp} XP`] : []),
-  ];
-  return parts.length ? parts.join(" · ") : "No rewards";
-}
-
-/** Validates the stored draft. Its key sits under the draft key, so invalidating the draft re-validates. */
-function useDraftValidation() {
-  const { token, project, environment } = useWorkspace();
-  return useQuery({
-    queryKey: [...keys.draft(project.id, environment.id), "validation"],
-    queryFn: () => unwrap(client.POST("/v1/projects/{projectId}/environments/{envId}/configurations/validate", { params: { path: { projectId: project.id, envId: environment.id } }, headers: authHeaders({ token }) }), token),
-  });
-}
 
 export function Achievements() {
   const w = useWorkspace();
@@ -144,7 +126,7 @@ export function Achievements() {
                     <small className="card-key">{a.key}{withErrors.has(index) && <span className="issue-dot"> · has issues</span>}</small>
                     {a.description && <p>{a.description}</p>}
                     <ul className="condition-list">{a.conditions.map((c, i) => <li key={i}>{describeCondition(c)}</li>)}</ul>
-                    <small>{rewardSummary(a)} · {claims.get(a.key) ?? 0} claim{claims.get(a.key) === 1 ? "" : "s"}</small>
+                    <small>{rewardSummary(a.rewards)} · {claims.get(a.key) ?? 0} claim{claims.get(a.key) === 1 ? "" : "s"}</small>
                   </button>
                   {preview && <PlayerProgress achievement={live} canClaimAsServer={Boolean(w.serverCredential && w.demoPlayerId)} busy={w.busy} onClaim={claim} />}
                 </article>

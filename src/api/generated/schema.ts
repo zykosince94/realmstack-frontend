@@ -893,10 +893,308 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/projects/{projectId}/environments/{envId}/quests/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Acceptance and claim counts per published quest, over all periods. No player identifiers. */
+        get: operations["getProjectsByProjectidEnvironmentsByEnvidQuestsStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/quests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List quests in the draft. */
+        get: operations["getProjectsByProjectidEnvironmentsByEnvidQuests"];
+        put?: never;
+        /** Add a quest to the draft (409 if the key exists). Prerequisites and references are checked by validate and publish. */
+        post: operations["postProjectsByProjectidEnvironmentsByEnvidQuests"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/quests/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a draft quest. */
+        get: operations["getProjectsByProjectidEnvironmentsByEnvidQuestsByKey"];
+        /** Replace a draft quest; the body key may be omitted. */
+        put: operations["putProjectsByProjectidEnvironmentsByEnvidQuestsByKey"];
+        post?: never;
+        /** Remove a quest from the draft. */
+        delete: operations["deleteProjectsByProjectidEnvironmentsByEnvidQuestsByKey"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/players/me/quests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Quest log: every quest with status, current stage, per-stage progress, claimable rewards and reset or expiry time. */
+        get: operations["getPlayersMeQuests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/players/me/quests/{key}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept an available quest. 409 QUEST_ALREADY_ACTIVE or ALREADY_CLAIMED; 422 QUEST_LOCKED, QUEST_NOT_AVAILABLE or QUEST_EXPIRED. */
+        post: operations["postPlayersMeQuestsByKeyAccept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/players/me/quests/{key}/abandon": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Abandon an active quest; it returns to available and claimed rewards are kept. 422 QUEST_NOT_ACTIVE. */
+        post: operations["postPlayersMeQuestsByKeyAbandon"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/players/me/quests/{key}/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Claim every earned stage reward plus the completion reward (claim policy player). 403 CLAIM_NOT_ALLOWED; 409 ALREADY_CLAIMED; 422 NOT_COMPLETED, QUEST_NOT_ACTIVE or QUEST_LOCKED. */
+        post: operations["postPlayersMeQuestsByKeyClaim"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/server/players/{playerId}/quests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A player's quest log for a trusted game server. */
+        get: operations["getServerPlayersByPlayeridQuests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/server/players/{playerId}/quests/{key}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a quest on the player's behalf. */
+        post: operations["postServerPlayersByPlayeridQuestsByKeyAccept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/server/players/{playerId}/quests/{key}/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Claim a quest's earned rewards on the player's behalf (any claim policy). */
+        post: operations["postServerPlayersByPlayeridQuestsByKeyClaim"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        QuestStage: {
+            key: string;
+            name: string;
+            conditions: components["schemas"]["Condition"][];
+            rewards?: components["schemas"]["Rewards"];
+        };
+        QuestDefinition: {
+            key: string;
+            name: string;
+            description?: string;
+            /** @description Optional grouping label, e.g. Main Story. */
+            chain?: string;
+            requires_quests?: string[] | null;
+            requires_achievements?: string[] | null;
+            stages: components["schemas"]["QuestStage"][];
+            rewards?: components["schemas"]["Rewards"];
+            /**
+             * @default player
+             * @enum {string}
+             */
+            claimable_by: "player" | "server";
+            auto_accept?: boolean;
+            /**
+             * @default none
+             * @enum {string}
+             */
+            repeat: "none" | "daily" | "weekly";
+            /** Format: date-time */
+            available_from?: string | null;
+            /** Format: date-time */
+            available_until?: string | null;
+        };
+        PlayerQuestStage: {
+            key: string;
+            name: string;
+            conditions: components["schemas"]["Condition"][];
+            rewards: components["schemas"]["Rewards"];
+            /** @description Null unless the quest is accepted (or auto-accepted) in this period. */
+            progress: components["schemas"]["ConditionProgress"][] | null;
+            /** @description Conditions met inside the quest window and every earlier stage complete. */
+            complete: boolean;
+            claimed: boolean;
+        };
+        PlayerQuest: {
+            key: string;
+            name: string;
+            description: string;
+            chain: string | null;
+            /** @enum {string} */
+            repeat: "none" | "daily" | "weekly";
+            auto_accept: boolean;
+            /** @enum {string} */
+            claimable_by: "player" | "server";
+            requires_quests: string[];
+            requires_achievements: string[];
+            /** @enum {string} */
+            status: "claimed" | "locked" | "upcoming" | "expired" | "completed" | "active" | "available";
+            /** @description Empty for non-repeating quests, YYYY-MM-DD (UTC) for daily, YYYY-Www for weekly. */
+            period_key: string;
+            /**
+             * Format: date-time
+             * @description When progress started counting (for auto-accepted quests, when the quest became available).
+             */
+            accepted_at: string | null;
+            auto_accepted: boolean;
+            /** @description Index of the first incomplete stage; null when complete or not accepted. */
+            current_stage: number | null;
+            stages: components["schemas"]["PlayerQuestStage"][];
+            rewards: components["schemas"]["Rewards"];
+            completion_claimed: boolean;
+            claimable: {
+                stages: number[];
+                completion: boolean;
+            };
+            locked_by: {
+                quests: string[];
+                achievements: string[];
+            };
+            /** Format: date-time */
+            available_from: string | null;
+            /** Format: date-time */
+            available_until: string | null;
+            /**
+             * Format: date-time
+             * @description End of the current period for daily and weekly quests.
+             */
+            resets_at: string | null;
+            /**
+             * Format: date-time
+             * @description When the availability window closes.
+             */
+            expires_at: string | null;
+        };
+        QuestClaimResult: {
+            key: string;
+            period_key: string;
+            /** @enum {string} */
+            claimed_by: "player" | "server";
+            /** Format: date-time */
+            claimed_at: string;
+            paid: {
+                /** @description -1 is the completion reward. */
+                stage_index: number;
+                stage_key: string | null;
+                rewards: components["schemas"]["Rewards"];
+            }[];
+            quest: components["schemas"]["PlayerQuest"];
+        };
+        QuestStat: {
+            key: string;
+            name: string;
+            chain: string | null;
+            repeat: string;
+            /**
+             * Format: int64
+             * @description Explicit acceptances, one per player and period.
+             */
+            accepted: number;
+            /** Format: int64 */
+            abandoned: number;
+            /** Format: int64 */
+            completions_claimed: number;
+            /** Format: int64 */
+            stage_rewards_claimed: number;
+        };
         Meta: {
             request_id: string;
             /** @description Present when another page exists; pass as ?cursor=. */
@@ -1078,6 +1376,7 @@ export interface components {
             leaderboards: components["schemas"]["LeaderboardDefinition"][];
             stats: components["schemas"]["StatDefinition"][];
             achievements: components["schemas"]["AchievementDefinition"][];
+            quests?: components["schemas"]["QuestDefinition"][];
         } & {
             [key: string]: unknown;
         };
@@ -3850,6 +4149,434 @@ export interface operations {
             };
             401: components["responses"]["E401"];
             404: components["responses"]["E404"];
+        };
+    };
+    getProjectsByProjectidEnvironmentsByEnvidQuestsStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["QuestStat"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    getProjectsByProjectidEnvironmentsByEnvidQuests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["QuestDefinition"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    postProjectsByProjectidEnvironmentsByEnvidQuests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestDefinition"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["QuestDefinition"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    getProjectsByProjectidEnvironmentsByEnvidQuestsByKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Quest key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["QuestDefinition"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    putProjectsByProjectidEnvironmentsByEnvidQuestsByKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Quest key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestDefinition"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["QuestDefinition"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    deleteProjectsByProjectidEnvironmentsByEnvidQuestsByKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Quest key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Deleted"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    getPlayersMeQuests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlayerQuest"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    postPlayersMeQuestsByKeyAccept: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Quest key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlayerQuest"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postPlayersMeQuestsByKeyAbandon: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Quest key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlayerQuest"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postPlayersMeQuestsByKeyClaim: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Quest key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["QuestClaimResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            403: components["responses"]["E403"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    getServerPlayersByPlayeridQuests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Player ID (must belong to the credential's environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlayerQuest"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    postServerPlayersByPlayeridQuestsByKeyAccept: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Player ID (must belong to the credential's environment). */
+                playerId: string;
+                /** @description Quest key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlayerQuest"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postServerPlayersByPlayeridQuestsByKeyClaim: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Player ID (must belong to the credential's environment). */
+                playerId: string;
+                /** @description Quest key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["QuestClaimResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
         };
     };
 }

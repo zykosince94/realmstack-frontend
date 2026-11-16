@@ -316,3 +316,48 @@ label.checkbox input { width: auto; }
   .editor-layout.with-panel { grid-template-columns: 1fr; }
   .side-panel { position: static; max-height: none; }
 }
+/* Phase 6: quests */
+.quest-canvas { height: 640px; border: 1px solid var(--line); border-radius: 12px; background: #0f1926; overflow: hidden; }
+.quest-canvas .react-flow { --xy-background-color: #0f1926; --xy-edge-stroke: #5d7898; --xy-edge-stroke-selected: var(--cyan); --xy-handle-background-color: var(--cyan); --xy-handle-border-color: #0f1926; --xy-minimap-background-color: #111c2b; --xy-controls-button-background-color: var(--panel-raised); --xy-controls-button-color: var(--white); --xy-controls-button-border-color: var(--line); --xy-attribution-background-color: transparent; }
+.quest-canvas .react-flow__attribution a { color: var(--dim); }
+.lane-node { box-sizing: border-box; border-top: 1px dashed #2a3d55; border-bottom: 1px dashed #2a3d55; background: #14202f66; pointer-events: none; }
+.lane-node span { position: absolute; top: 8px; left: 12px; color: var(--dim); font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.quest-node { display: flex; flex-direction: column; gap: 5px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--white); box-shadow: 0 6px 18px #0006; font-size: 12px; }
+.quest-node.selected { border-color: var(--cyan); box-shadow: 0 0 0 2px #45d6bd33; }
+.quest-node.has-issues { border-color: #a0723b; }
+.quest-node-title { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; font: inherit; }
+.quest-node-title b { font-size: 13px; }
+.quest-node-title small, .quest-node-stats { color: var(--muted); font-size: 11px; }
+.quest-node-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; }
+.quest-node.status-locked { opacity: .65; border-style: dashed; }
+.quest-node.status-available { border-color: #638fff88; }
+.quest-node.status-active { border-color: var(--blue); }
+.quest-node.status-completed { border-color: var(--cyan); }
+.quest-node.status-claimed { border-color: #6b7cff; background: #18213a; }
+.quest-node.status-expired, .quest-node.status-upcoming { opacity: .75; }
+.quest-preview { display: flex; flex-direction: column; gap: 4px; padding-top: 6px; border-top: 1px solid var(--line); cursor: default; }
+.quest-preview small { color: var(--muted); font-size: 11px; }
+.status-pill.active { background: #1f2f57; color: #9db6ff; }
+.status-pill.available { background: #1d2f45; color: #b7c6d6; }
+.status-pill.locked, .status-pill.expired { background: #2a2a33; color: #9aa3b2; }
+.status-pill.upcoming { background: #2c2a1a; color: #e5cf86; }
+.quest-list { display: flex; flex-direction: column; gap: 16px; }
+.quest-list-group h3 { margin: 0 0 8px; color: var(--dim); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.quest-row { display: flex; flex-direction: column; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); overflow: hidden; }
+.quest-row.selected { border-color: var(--cyan); }
+.quest-row.has-issues { border-color: #a0723b; }
+.quest-row .quest-preview { padding: 10px 14px; background: #111c2b; }
+.quest-panel .prerequisites { display: flex; flex-direction: column; gap: 5px; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; }
+.quest-panel .prerequisites legend { padding: 0 4px; color: var(--muted); font-size: 12px; }
+.quest-panel .prerequisites small { color: var(--dim); }
+.two-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stage-card { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-raised); }
+.stage-card.dragging { position: relative; z-index: 2; box-shadow: 0 10px 24px #0008; }
+.stage-head { display: flex; align-items: center; gap: 8px; }
+.stage-head b { font-size: 13px; }
+.stage-tools { display: flex; gap: 2px; margin-left: auto; }
+.drag-handle { cursor: grab; touch-action: none; }
+.stage-rewards summary { color: var(--muted); font-size: 12px; cursor: pointer; }
+@media (max-width: 900px) {
+  .two-fields { grid-template-columns: 1fr; }
+}

@@ -70,12 +70,15 @@ src/api/generated/schema.ts  generated from ../realmstack-backend/api/openapi.ya
 src/api/client.ts            typed openapi-fetch client, unwrap(), authHeaders(), idempotencyKey()
 src/api/errors.ts            ApiError (status, code, field errors, token), describeError, isExpiredSession
 src/api/types.ts             friendly aliases for generated types
-src/hooks/queries.ts         query keys and hooks (draft, published, credentials, achievement stats, player data)
+src/hooks/queries.ts         query keys and hooks (draft, validation, published, credentials, achievement/quest stats, player data)
+src/hooks/useMediaQuery.ts   media-query hook (the quest editor's narrow-screen fallback)
 src/components/ui.tsx        shared presentational pieces
 src/lib/config.ts            pure helpers (select keys, slots, thresholds, conditions, field-error mapping)
+src/lib/quests.ts            pure quest-graph helpers (loop checks, connect/disconnect, chain lanes, dagre layout, editor_layout)
 src/features/<screen>/       one folder per screen: overview, players, economy, progression,
-                             leaderboards, stats, achievements, settings, auth, projects
-src/test/                    fetch mock, shared fixtures, renderApp()
+                             leaderboards, stats, achievements, quests, settings, auth, projects
+src/features/goals/          condition builder and reward picker shared by achievements and quests
+src/test/                    fetch mock, shared fixtures, renderApp(), React Flow/matchMedia stand-ins for jsdom
 ```
 
 **Request and response types are generated, never hand-written.** After the backend changes `api/openapi.yaml`, regenerate and commit the result:
@@ -88,6 +91,8 @@ The generated file is committed so this repository builds on its own (CI cannot 
 
 Server data lives in the TanStack Query cache, keyed by project and environment (`src/hooks/queries.ts`); a mutation refreshes what it changed by invalidating those keys. Local form state stays in `useState`.
 
+The Quests screen is loaded lazily (`React.lazy` in `src/app/App.tsx`): React Flow (`@xyflow/react`), `@dagrejs/dagre` and `@dnd-kit` ship in a separate chunk that downloads only when the screen opens. Node positions are saved in the draft's `editor_layout.quests`; publishing ignores them.
+
 ## Repositories and learning guides
 
 - Backend repo: `../realmstack-backend/` — run Go tests with `go test ./...` and `go vet ./...`.
@@ -95,4 +100,4 @@ Server data lives in the TanStack Query cache, keyed by project and environment 
 - Backend study guide: `../study/realmstack-backend-guide.html` when using the original workspace.
 - RealmStack MVP reference: [`../RealmStack-MVP-Specification.html`](../RealmStack-MVP-Specification.html) when working in the original workspace.
 
-The demo includes project/environment management, player identity, inventory/economy, progression, leaderboards, stats & flags, and achievements (card grid, side-panel editor with condition builder and reward picker, inline validation issues, claim statistics, and a player preview with Claim). Quests, AI configuration and the Unity sample are not included yet. This is a local learning/MVP environment, not a production deployment; configure real secrets, HTTPS, backups, monitoring and abuse protection before external use.
+The demo includes project/environment management, player identity, inventory/economy, progression, leaderboards, stats & flags, achievements (card grid, side-panel editor with condition builder and reward picker, inline validation issues, claim statistics, and a player preview with Claim), and quests (React Flow canvas with chain lanes, drag-to-connect prerequisites with loop prevention, auto-arrange, minimap; side panel with drag-to-reorder stages; issue bar; player preview with Accept, Abandon and Claim; a list on narrow screens). AI configuration and the Unity sample are not included yet. This is a local learning/MVP environment, not a production deployment; configure real secrets, HTTPS, backups, monitoring and abuse protection before external use.

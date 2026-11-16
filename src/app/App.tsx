@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, Award, Boxes, Flag, Gamepad2, Gauge, LogOut, Plus, ShieldCheck, Trophy, Users, Wallet } from "lucide-react";
+import { Activity, Award, Boxes, Flag, Gamepad2, Gauge, LogOut, Plus, ScrollText, ShieldCheck, Trophy, Users, Wallet } from "lucide-react";
 import { authHeaders, client, unwrap } from "../api/client";
 import { describeError, isExpiredSession } from "../api/errors";
 import type { Environment, Project } from "../api/types";
@@ -18,6 +18,9 @@ import { StatsScreen } from "../features/stats/StatsScreen";
 import { Achievements } from "../features/achievements/Achievements";
 import { Settings } from "../features/settings/Settings";
 
+// The quest editor pulls in React Flow, dagre and dnd-kit; load it only when opened.
+const QuestsScreen = lazy(() => import("../features/quests/QuestsScreen"));
+
 const screens = [
   { id: "overview", label: "Overview", icon: Gauge, view: Overview },
   { id: "players", label: "Players", icon: Users, view: Players },
@@ -26,6 +29,7 @@ const screens = [
   { id: "leaderboards", label: "Leaderboards", icon: Trophy, view: Leaderboards },
   { id: "stats", label: "Stats & flags", icon: Flag, view: StatsScreen },
   { id: "achievements", label: "Achievements", icon: Award, view: Achievements },
+  { id: "quests", label: "Quests", icon: ScrollText, view: QuestsScreen },
   { id: "settings", label: "Project settings", icon: ShieldCheck, view: Settings },
 ] as const;
 type Screen = (typeof screens)[number]["id"];
@@ -180,7 +184,7 @@ export function App() {
             : !project ? <ProjectsEmpty token={token} busy={busy} run={run} onCreated={selectProject} />
             : !environment ? (environmentsQuery.isPending ? <p className="empty-text">Loading environments…</p>
               : <div className="empty-card"><div className="empty-icon"><Boxes /></div><h2>Choose an environment</h2><p>This project does not have an environment yet.</p><button className="button primary" disabled={busy} onClick={() => void run(async () => { const created = await unwrap(client.POST("/v1/projects/{projectId}/environments", { params: { path: { projectId: project.id } }, body: { name: "development" }, headers: authHeaders({ token }) }), token); setEnvironments([created]); setEnvironmentId(created.id); })}><Plus size={16} /> Create development environment</button></div>)
-            : <WorkspaceContext.Provider value={workspace}><Active /></WorkspaceContext.Provider>}
+            : <WorkspaceContext.Provider value={workspace}><Suspense fallback={<p className="empty-text">Loading…</p>}><Active /></Suspense></WorkspaceContext.Provider>}
         </div>
       </main>
     </div>

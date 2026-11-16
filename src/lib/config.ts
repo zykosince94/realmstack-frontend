@@ -33,7 +33,7 @@ export function parseThresholds(text: string): number[] | null {
 
 /** An empty draft, used before the real one loads into an editor. */
 export function emptyConfig(): Config {
-  return { items: [], currencies: [], progression: [], leaderboards: [], stats: [], achievements: [] };
+  return { items: [], currencies: [], progression: [], leaderboards: [], stats: [], achievements: [], quests: [] };
 }
 
 /** Human labels for the closed condition set, in the order the condition builder offers them. */
