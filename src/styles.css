@@ -270,3 +270,49 @@ tbody tr:last-child td { border-bottom: 0; }
   .connection-row { align-items: flex-start; flex-direction: column; justify-content: center; gap: 5px; padding: 8px 0; }
   .demo-banner .button { margin-left: 0; }
 }
+/* Phase 5: achievements and stats editors */
+.button.small { padding: 6px 10px; font-size: 12px; }
+.link-button { border: 0; background: none; padding: 0; color: var(--cyan); font: 600 12px Consolas, monospace; text-decoration: underline; }
+.field-issue { display: block; color: var(--red); font-size: 11px; font-weight: 600; margin: 2px 0 0; }
+ul.field-issue { padding-left: 18px; margin: 0 0 12px; }
+[aria-invalid="true"] { border-color: var(--red); }
+.issue-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-bottom: 15px; padding: 12px 16px; border: 1px solid #6b4b2a; background: #2a2016; border-radius: 9px; color: #f2c88f; font-size: 13px; }
+.issue-bar ul { flex-basis: 100%; margin: 4px 0 0; padding-left: 22px; color: #e4cfae; font-size: 12px; }
+.editor-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 15px; align-items: start; }
+.editor-layout.with-panel { grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.achievement-card { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); overflow: hidden; }
+.achievement-card.selected { border-color: var(--cyan); box-shadow: 0 0 0 2px #45d6bd2a; }
+.achievement-card.has-issues { border-color: #a0723b; }
+.card-select { display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 0; background: transparent; color: inherit; text-align: left; }
+.card-select:hover { background: var(--panel-raised); }
+.card-select p { margin: 0; color: var(--muted); font-size: 12px; }
+.card-select > small { color: var(--dim); font-size: 11px; }
+.card-top { display: flex; align-items: center; gap: 8px; color: var(--white); }
+.card-key { font-family: Consolas, monospace; }
+.issue-dot { color: #f2b56b; }
+.badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 99px; background: #23364c; color: #b7c6d6; font-size: 10px; font-weight: 700; }
+.condition-list { margin: 0; padding-left: 16px; color: #c4cfdb; font-size: 12px; }
+.player-progress { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-top: 1px solid var(--line); background: #111c2b; }
+.player-progress small { color: var(--muted); font-size: 11px; }
+.status-pill { align-self: flex-start; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; background: #24364b; color: #aebdd0; }
+.status-pill.completed { background: #1d3d36; color: #70e1ce; }
+.status-pill.claimed { background: #23305a; color: #9db6ff; }
+.progress-line { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; }
+.progress-track { height: 6px; border-radius: 99px; background: #22344a; overflow: hidden; }
+.progress-track span { display: block; height: 100%; background: linear-gradient(90deg, #45d6bd, #638fff); }
+.side-panel { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.side-panel h4 { margin: 8px 0 0; font-size: 13px; color: var(--white); }
+.side-panel h4 small { color: var(--dim); font-weight: 500; }
+.condition-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) auto; align-items: end; gap: 8px; margin: 0; padding: 10px; border: 1px solid var(--line); border-radius: 9px; }
+.condition-row legend { padding: 0 4px; color: var(--dim); font-size: 11px; }
+.rewards-editor { display: flex; flex-direction: column; gap: 8px; }
+.reward-row { display: grid; grid-template-columns: 1fr 110px auto; align-items: end; gap: 8px; }
+.toggle-row { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.toggle-row > label { flex: 1 1 160px; }
+label.checkbox { flex-direction: row; align-items: center; gap: 8px; }
+label.checkbox input { width: auto; }
+@media (max-width: 1000px) {
+  .editor-layout.with-panel { grid-template-columns: 1fr; }
+  .side-panel { position: static; max-height: none; }
+}

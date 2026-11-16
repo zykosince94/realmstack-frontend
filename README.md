@@ -9,7 +9,6 @@ Keep the two repositories as sibling folders:
 ```text
 Game Backend Projects/
 ├── RealmStack-MVP-Specification.html   # workspace reference, not in either app repo
-├── QuestForge-MVP-Specification.html   # workspace reference, not in either app repo
 ├── realmstack-backend/                 # independent Go Git repository
 └── realmstack-frontend/                # this React Git repository
 ```
@@ -62,6 +61,33 @@ npm test
 npm run build
 ```
 
+## Code layout
+
+```text
+src/main.tsx                 React root + TanStack Query provider
+src/app/                     App shell (sign-in, project/environment selection, navigation), workspace context, query client
+src/api/generated/schema.ts  generated from ../realmstack-backend/api/openapi.yaml; never edit by hand
+src/api/client.ts            typed openapi-fetch client, unwrap(), authHeaders(), idempotencyKey()
+src/api/errors.ts            ApiError (status, code, field errors, token), describeError, isExpiredSession
+src/api/types.ts             friendly aliases for generated types
+src/hooks/queries.ts         query keys and hooks (draft, published, credentials, achievement stats, player data)
+src/components/ui.tsx        shared presentational pieces
+src/lib/config.ts            pure helpers (select keys, slots, thresholds, conditions, field-error mapping)
+src/features/<screen>/       one folder per screen: overview, players, economy, progression,
+                             leaderboards, stats, achievements, settings, auth, projects
+src/test/                    fetch mock, shared fixtures, renderApp()
+```
+
+**Request and response types are generated, never hand-written.** After the backend changes `api/openapi.yaml`, regenerate and commit the result:
+
+```powershell
+npm run generate:api   # reads ../realmstack-backend/api/openapi.yaml
+```
+
+The generated file is committed so this repository builds on its own (CI cannot see the backend repository). TypeScript then flags every call that no longer matches the contract.
+
+Server data lives in the TanStack Query cache, keyed by project and environment (`src/hooks/queries.ts`); a mutation refreshes what it changed by invalidating those keys. Local form state stays in `useState`.
+
 ## Repositories and learning guides
 
 - Backend repo: `../realmstack-backend/` — run Go tests with `go test ./...` and `go vet ./...`.
@@ -69,4 +95,4 @@ npm run build
 - Backend study guide: `../study/realmstack-backend-guide.html` when using the original workspace.
 - RealmStack MVP reference: [`../RealmStack-MVP-Specification.html`](../RealmStack-MVP-Specification.html) when working in the original workspace.
 
-The demo includes project/environment management, player identity, inventory/economy, progression and leaderboards. AI configuration and the Unity sample are not included. This is a local learning/MVP environment, not a production deployment; configure real secrets, HTTPS, backups, monitoring and abuse protection before external use.
+The demo includes project/environment management, player identity, inventory/economy, progression, leaderboards, stats & flags, and achievements (card grid, side-panel editor with condition builder and reward picker, inline validation issues, claim statistics, and a player preview with Claim). Quests, AI configuration and the Unity sample are not included yet. This is a local learning/MVP environment, not a production deployment; configure real secrets, HTTPS, backups, monitoring and abuse protection before external use.
