@@ -21,8 +21,10 @@ Prerequisites: Docker Desktop and both sibling repositories.
 
 ```powershell
 Copy-Item .env.example .env
-docker compose up --build
+docker compose up -d --build --wait
 ```
+
+The stack is the Compose project `realmstack`: containers `realmstack-db-1`, `realmstack-api-1` and `realmstack-web-1` (list them with `docker compose ps`), images `realmstack-api:local` and `realmstack-web:local`, and the database volume `realmstack_db-data`. All ports are bound to `127.0.0.1`.
 
 Open the dashboard at <http://localhost:5174>. The API listens at <http://localhost:8080>; check <http://localhost:8080/healthz> for readiness. Browser API calls are proxied through Vite. PostgreSQL is published on host port 5434 to avoid colliding with an existing local database.
 

@@ -1,14 +1,31 @@
+# Integrated RealmStack demo: database, API (built from ../realmstack-backend) and dashboard.
+#
+#   docker compose up -d --build --wait     # or: docker compose up --build
+#   docker compose down                     # stop, keep the database
+#   docker compose down -v                  # stop and reset the demo database (asks first, see README)
+#
+# Every credential below is a LOCAL DEMO default, overridable from the environment or a
+# .env file (see .env.example). Never reuse them anywhere real. Ports are bound to
+# 127.0.0.1 so nothing is reachable from outside this machine.
+#
+# Containers are named realmstack-<service>-1, images realmstack-<service>:local and the
+# volume realmstack_db-data, all grouped under the project name below. The backend repo
+# has its own standalone stack (project realmstack-backend); the two share host port 8080,
+# so run one at a time.
+name: realmstack
+
 services:
-  postgres:
+  db:
     image: postgres:17-alpine
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-realmstack}
       POSTGRES_USER: ${POSTGRES_USER:-realmstack}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-only}
     ports:
-      - "${POSTGRES_PORT:-5434}:5432"
+      # 5434 on the host avoids colliding with a PostgreSQL you already run locally.
+      - "127.0.0.1:${POSTGRES_PORT:-5434}:5432"
     volumes:
-      - realmstack-postgres:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 3s
@@ -18,30 +35,33 @@ services:
   api:
     build:
       context: ../realmstack-backend
+    image: realmstack-api:local
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-realmstack}:${POSTGRES_PASSWORD:-local-dev-only}@postgres:5432/${POSTGRES_DB:-realmstack}?sslmode=disable
+      DATABASE_URL: postgres://${POSTGRES_USER:-realmstack}:${POSTGRES_PASSWORD:-local-dev-only}@db:5432/${POSTGRES_DB:-realmstack}?sslmode=disable
       JWT_SECRET: ${JWT_SECRET:-local-only-change-this-secret-before-deploying}
       APP_ENV: local
       DEMO_MODE: ${DEMO_MODE:-true}
       # Optional AI assistant: set AI_ENCRYPTION_KEY in .env to enable it (see .env.example).
       AI_ENCRYPTION_KEY: ${AI_ENCRYPTION_KEY:-}
     ports:
-      - "${API_PORT:-8080}:8080"
+      - "127.0.0.1:${API_PORT:-8080}:8080"
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
     restart: unless-stopped
 
-  frontend:
+  # The Vite dashboard; it proxies /v1 to the API, so the browser only talks to this port.
+  web:
     build:
       context: .
+    image: realmstack-web:local
     environment:
       VITE_API_PROXY_TARGET: http://api:8080
     ports:
-      - "${WEB_PORT:-5174}:5173"
+      - "127.0.0.1:${WEB_PORT:-5174}:5173"
     depends_on:
       - api
     restart: unless-stopped
 
 volumes:
-  realmstack-postgres:
+  db-data:
