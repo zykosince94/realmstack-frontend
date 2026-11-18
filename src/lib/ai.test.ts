@@ -1,7 +1,30 @@
 import { describe, expect, it } from "vitest";
 import type { Config } from "../api/types";
-import { answerOf, generates, operationLabel, paramsFor, proposalRows, usageLabel } from "./ai";
+import { answerOf, asProvider, destinationChanged, generates, hostOf, operationLabel, paramsFor, proposalRows, usageLabel } from "./ai";
 import { emptyConfig } from "./config";
+
+describe("AI provider helpers", () => {
+  it("narrows unknown providers to OpenAI and shortens base URLs for display", () => {
+    expect(asProvider("openai_compatible")).toBe("openai_compatible");
+    expect(asProvider("openai")).toBe("openai");
+    expect(asProvider(null)).toBe("openai");
+    expect(asProvider("acme")).toBe("openai");
+    expect(hostOf("https://openrouter.ai/api/v1")).toBe("openrouter.ai");
+    expect(hostOf("not a url")).toBe("not a url");
+  });
+
+  it("knows when saving would send the stored key to a new destination", () => {
+    const openai = { provider: "openai", base_url: null };
+    const router = { provider: "openai_compatible", base_url: "https://openrouter.ai/api/v1" };
+    expect(destinationChanged(openai, "openai", "")).toBe(false);
+    expect(destinationChanged(openai, "openai", "https://ignored.example")).toBe(false);
+    expect(destinationChanged(openai, "openai_compatible", "https://openrouter.ai/api/v1")).toBe(true);
+    expect(destinationChanged(router, "openai", "")).toBe(true);
+    expect(destinationChanged(router, "openai_compatible", "https://openrouter.ai/api/v1")).toBe(false);
+    expect(destinationChanged(router, "openai_compatible", " https://openrouter.ai/api/v1/ ")).toBe(false);
+    expect(destinationChanged(router, "openai_compatible", "https://api.groq.com/openai/v1")).toBe(true);
+  });
+});
 
 describe("AI helpers", () => {
   it("sends only the fields an operation uses, without empty values", () => {

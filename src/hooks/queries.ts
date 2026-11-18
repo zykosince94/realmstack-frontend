@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { authHeaders, client, unwrap } from "../api/client";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { authHeaders, client, unwrap, unwrapPage } from "../api/client";
 import { useWorkspace } from "../app/workspace";
 
 /**
@@ -20,12 +20,10 @@ export const keys = {
   versions: (projectId: string, envId: string) => ["scope", projectId, envId, "versions"] as const,
   aiGenerations: (projectId: string, envId: string) => ["scope", projectId, envId, "ai-generations"] as const,
   aiGeneration: (projectId: string, envId: string, id: string) => ["scope", projectId, envId, "ai-generations", id] as const,
+  adminPlayers: (projectId: string, envId: string, search: string) => ["scope", projectId, envId, "players", "list", search] as const,
+  adminPlayer: (projectId: string, envId: string, playerId: string, part: string) => ["scope", projectId, envId, "players", playerId, part] as const,
   // AI settings belong to the dashboard user, not to a project or environment.
   aiSettings: (token: string) => ["ai-settings", token] as const,
-  player: (playerToken: string) => ["player", playerToken] as const,
-  playerAchievements: (playerToken: string) => ["player", playerToken, "achievements"] as const,
-  playerStats: (playerToken: string) => ["player", playerToken, "stats"] as const,
-  playerQuests: (playerToken: string) => ["player", playerToken, "quests"] as const,
 };
 
 /** Reports a query's error once through the workspace (which handles expired sessions). */
@@ -153,43 +151,111 @@ export function useAIGeneration(id: string | null) {
   });
 }
 
-/** The demo player's quest log, as a game client would see it. Disabled until a player signs in. */
-export function usePlayerQuests() {
-  const { demoPlayerToken } = useWorkspace();
-  return useQuery({
-    queryKey: keys.playerQuests(demoPlayerToken),
-    enabled: demoPlayerToken !== "",
-    queryFn: () => unwrap(client.GET("/v1/players/me/quests", { headers: authHeaders({ token: demoPlayerToken }) }), demoPlayerToken),
-  });
-}
-
-/** The demo player's achievements (masked, as a game client would see them). Disabled until a player signs in. */
-export function usePlayerAchievements() {
-  const { demoPlayerToken } = useWorkspace();
-  return useQuery({
-    queryKey: keys.playerAchievements(demoPlayerToken),
-    enabled: demoPlayerToken !== "",
-    queryFn: () => unwrap(client.GET("/v1/players/me/achievements", { headers: authHeaders({ token: demoPlayerToken }) }), demoPlayerToken),
-  });
-}
-
-/** The demo player's counters and flags. Disabled until a player signs in. */
-export function usePlayerStats() {
-  const { demoPlayerToken } = useWorkspace();
-  return useQuery({
-    queryKey: keys.playerStats(demoPlayerToken),
-    enabled: demoPlayerToken !== "",
-    queryFn: () => unwrap(client.GET("/v1/players/me/stats", { headers: authHeaders({ token: demoPlayerToken }) }), demoPlayerToken),
-  });
-}
-
 /** Invalidation helpers for after a mutation. Stable while the scope is, so they are safe in hook dependencies. */
 export function useInvalidate() {
   const queryClient = useQueryClient();
-  const { project, environment, demoPlayerToken } = useWorkspace();
+  const { project, environment } = useWorkspace();
   return useMemo(() => ({
     scope: () => queryClient.invalidateQueries({ queryKey: keys.scope(project.id, environment.id) }),
     draft: () => queryClient.invalidateQueries({ queryKey: keys.draft(project.id, environment.id) }),
-    player: () => queryClient.invalidateQueries({ queryKey: keys.player(demoPlayerToken) }),
-  }), [queryClient, project.id, environment.id, demoPlayerToken]);
+  }), [queryClient, project.id, environment.id]);
+}
+
+// --- Players (the admin views of the environment's players; actions are in playerActions.ts) ---
+
+/** The environment's players, newest first; search matches name, email, external key or ID. */
+export function usePlayerDirectory(search: string) {
+  const { token, path, projectId, envId } = useScopeParams();
+  const query = useInfiniteQuery({
+    queryKey: keys.adminPlayers(projectId, envId, search),
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) => unwrapPage(client.GET("/v1/projects/{projectId}/environments/{envId}/players", {
+      params: { path, query: { limit: 25, ...(search ? { search } : {}), ...(pageParam ? { cursor: pageParam } : {}) } }, headers: authHeaders({ token }),
+    }), token),
+    getNextPageParam: (last) => last.nextCursor,
+  });
+  useReportError(query.error, "Could not load players.");
+  return query;
+}
+
+function usePlayerScope(playerId: string) {
+  const scope = useScopeParams();
+  return { ...scope, playerPath: { ...scope.path, playerId } };
+}
+
+/** One player's profile and session summary. */
+export function useAdminPlayerProfile(playerId: string) {
+  const { token, playerPath, projectId, envId } = usePlayerScope(playerId);
+  const query = useQuery({
+    queryKey: keys.adminPlayer(projectId, envId, playerId, "profile"),
+    queryFn: () => unwrap(client.GET("/v1/projects/{projectId}/environments/{envId}/players/{playerId}", { params: { path: playerPath }, headers: authHeaders({ token }) }), token),
+  });
+  useReportError(query.error, "Could not load the player.");
+  return query;
+}
+
+export function useAdminPlayerProgression(playerId: string) {
+  const { token, playerPath, projectId, envId } = usePlayerScope(playerId);
+  return useQuery({
+    queryKey: keys.adminPlayer(projectId, envId, playerId, "progression"),
+    queryFn: () => unwrap(client.GET("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/progression", { params: { path: playerPath }, headers: authHeaders({ token }) }), token),
+  });
+}
+
+export function useAdminPlayerCurrency(playerId: string) {
+  const { token, playerPath, projectId, envId } = usePlayerScope(playerId);
+  return useQuery({
+    queryKey: keys.adminPlayer(projectId, envId, playerId, "currency"),
+    queryFn: () => unwrap(client.GET("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/currency", { params: { path: playerPath }, headers: authHeaders({ token }) }), token),
+  });
+}
+
+export function useAdminPlayerInventory(playerId: string, enabled: boolean) {
+  const { token, playerPath, projectId, envId } = usePlayerScope(playerId);
+  return useQuery({
+    queryKey: keys.adminPlayer(projectId, envId, playerId, "inventory"),
+    enabled,
+    queryFn: () => unwrap(client.GET("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/inventory", { params: { path: playerPath }, headers: authHeaders({ token }) }), token),
+  });
+}
+
+export function useAdminPlayerStats(playerId: string, enabled: boolean) {
+  const { token, playerPath, projectId, envId } = usePlayerScope(playerId);
+  return useQuery({
+    queryKey: keys.adminPlayer(projectId, envId, playerId, "stats"),
+    enabled,
+    queryFn: () => unwrap(client.GET("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/stats", { params: { path: playerPath }, headers: authHeaders({ token }) }), token),
+  });
+}
+
+export function useAdminPlayerAchievements(playerId: string, enabled: boolean) {
+  const { token, playerPath, projectId, envId } = usePlayerScope(playerId);
+  return useQuery({
+    queryKey: keys.adminPlayer(projectId, envId, playerId, "achievements"),
+    enabled,
+    queryFn: () => unwrap(client.GET("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/achievements", { params: { path: playerPath }, headers: authHeaders({ token }) }), token),
+  });
+}
+
+export function useAdminPlayerQuests(playerId: string, enabled: boolean) {
+  const { token, playerPath, projectId, envId } = usePlayerScope(playerId);
+  return useQuery({
+    queryKey: keys.adminPlayer(projectId, envId, playerId, "quests"),
+    enabled,
+    queryFn: () => unwrap(client.GET("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/quests", { params: { path: playerPath }, headers: authHeaders({ token }) }), token),
+  });
+}
+
+/** The player's economy ledger, newest first, a page at a time. */
+export function useAdminPlayerLedger(playerId: string, enabled: boolean) {
+  const { token, playerPath, projectId, envId } = usePlayerScope(playerId);
+  return useInfiniteQuery({
+    queryKey: keys.adminPlayer(projectId, envId, playerId, "transactions"),
+    enabled,
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) => unwrapPage(client.GET("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/transactions", {
+      params: { path: playerPath, query: { limit: 25, ...(pageParam ? { cursor: pageParam } : {}) } }, headers: authHeaders({ token }),
+    }), token),
+    getNextPageParam: (last) => last.nextCursor,
+  });
 }

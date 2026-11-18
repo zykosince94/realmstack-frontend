@@ -47,8 +47,42 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Sign in a dashboard user (rate limited). */
+        /** Sign in a dashboard user (rate limited). Also sets the httpOnly rs_dashboard_refresh cookie (path /v1/auth, SameSite=Strict) used by POST /v1/auth/refresh. */
         post: operations["postAuthLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resume or extend a dashboard session. Reads the httpOnly rs_dashboard_refresh cookie set by login, rotates it, and returns a new access token. Reusing a rotated cookie revokes the whole sign-in (401 SESSION_REUSE). 401 NO_SESSION or INVALID_SESSION means sign in again (rate limited). */
+        post: operations["postAuthRefresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End the dashboard session: revokes the refresh cookie's sign-in and clears the cookie. Succeeds without a cookie. */
+        post: operations["postAuthLogout"];
         delete?: never;
         options?: never;
         head?: never;
@@ -445,6 +479,397 @@ export interface paths {
         post?: never;
         /** Remove a achievement from the draft. */
         delete: operations["deleteProjectsByProjectidEnvironmentsByEnvidAchievementsByKey"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Players of an owned environment, newest first, cursor-paginated (meta.next_cursor). Read-only. */
+        get: operations["getProjectPlayers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One player's profile and session summary (never the password or tokens). */
+        get: operations["getProjectPlayer"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/inventory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The player's inventory, as the game sees it. */
+        get: operations["getProjectPlayerInventory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/currency": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The player's balances, as the game sees them. */
+        get: operations["getProjectPlayerCurrency"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The player's economy ledger, newest first, cursor-paginated. */
+        get: operations["getProjectPlayerTransactions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/progression": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The player's XP and level on their pinned progression version. */
+        get: operations["getProjectPlayerProgression"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The player's counters and flags. */
+        get: operations["getProjectPlayerStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/achievements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The player's achievements with progress, unmasked (hidden ones included). */
+        get: operations["getProjectPlayerAchievements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/quests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The player's quest log. */
+        get: operations["getProjectPlayerQuests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/items/grant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Grant items to the player. */
+        post: operations["postProjectPlayerItemsGrant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/inventory/consume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Consume the player's items. */
+        post: operations["postProjectPlayerInventoryConsume"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/inventory/equip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Equip an item the player owns. */
+        post: operations["postProjectPlayerInventoryEquip"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/inventory/unequip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Unequip an item for the player. */
+        post: operations["postProjectPlayerInventoryUnequip"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/currency/credit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Credit the player's currency. */
+        post: operations["postProjectPlayerCurrencyCredit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/currency/spend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deduct from the player's currency (never below zero). */
+        post: operations["postProjectPlayerCurrencySpend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/xp/award": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Award the player XP. */
+        post: operations["postProjectPlayerXpAward"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/stats/{statKey}/increment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Increment one of the player's counters. */
+        post: operations["postProjectPlayerStatsStatkeyIncrement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/flags/{flagKey}/set": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set one of the player's flags. */
+        post: operations["postProjectPlayerFlagsFlagkeySet"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/achievements/{key}/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Claim a completed achievement for the player, whatever its claim policy. */
+        post: operations["postProjectPlayerAchievementsKeyClaim"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/quests/{key}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a quest for the player. */
+        post: operations["postProjectPlayerQuestsKeyAccept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/quests/{key}/abandon": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Abandon the player's active quest. */
+        post: operations["postProjectPlayerQuestsKeyAbandon"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/quests/{key}/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Claim a quest's earned rewards for the player, whatever its claim policy. */
+        post: operations["postProjectPlayerQuestsKeyClaim"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/leaderboards/{key}/scores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit a score for the player. */
+        post: operations["postProjectPlayerLeaderboardsKeyScores"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1075,7 +1500,7 @@ export interface paths {
         };
         /** The signed-in user's AI provider settings. The key is never returned, only its last four characters. 503 AI_UNAVAILABLE when the deployment has no AI_ENCRYPTION_KEY. */
         get: operations["getAiSettings"];
-        /** Store provider, model and (write-only) API key; the key is encrypted at rest. Omit api_key to change only the model. */
+        /** Store provider, model and (write-only) API key; the key is encrypted at rest. The key and model are first checked with the provider, and nothing is saved if that fails (422 AI_KEY_REJECTED or AI_MODEL_NOT_FOUND, 429 AI_RATE_LIMITED, 502 AI_PROVIDER_UNAVAILABLE). Omit api_key to change only the model. */
         put: operations["putAiSettings"];
         post?: never;
         /** Remove the stored provider key. */
@@ -1264,16 +1689,23 @@ export interface components {
             model: string | null;
             /** @description The last four characters of the stored key; the key itself is never returned. */
             key_last4: string | null;
+            /** @description The endpoint of an openai_compatible provider; null for openai. */
+            base_url: string | null;
             /** Format: date-time */
             updated_at: string | null;
             providers: string[];
         };
         AISettingsInput: {
-            /** @enum {string} */
-            provider: "openai";
-            /** @description Provider model ID, e.g. gpt-5.5. */
+            /**
+             * @description openai uses the OpenAI Responses API; openai_compatible uses the Chat Completions API of any compatible service (OpenRouter, Together, Groq, vLLM, Ollama, ...) at base_url.
+             * @enum {string}
+             */
+            provider: "openai" | "openai_compatible";
+            /** @description Provider model ID, e.g. gpt-5.5, or for openai_compatible a vendor ID such as nvidia/nemotron-3.5-super-vl:free. */
             model: string;
-            /** @description Write-only. Required the first time; omit to keep the stored key. */
+            /** @description Required for openai_compatible, forbidden for openai. Must be https and not a private or local address unless the operator sets AI_ALLOW_PRIVATE_URLS; no credentials, query or fragment. */
+            base_url?: string;
+            /** @description Write-only. Required the first time, and whenever the provider or base_url changes (a stored key is only sent to the destination it was saved with); omit to keep the stored key and change only the model. */
             api_key?: string;
         };
         AISettingsTest: {
@@ -1508,6 +1940,37 @@ export interface components {
             email: string;
             password: string;
         };
+        PlayerSummary: {
+            /** Format: uuid */
+            id: string;
+            display_name: string;
+            email: string | null;
+            external_player_key: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: int64 */
+            total_xp: number;
+            level: number;
+        };
+        PlayerAdminProfile: {
+            /** Format: uuid */
+            id: string;
+            display_name: string;
+            email: string | null;
+            external_player_key: string | null;
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            created_at: string;
+            /**
+             * Format: date-time
+             * @description When the player last signed in or refreshed a session.
+             */
+            last_session_at: string | null;
+            /** @description Refresh tokens that are neither revoked nor expired. */
+            active_sessions: number;
+        };
         UserSession: {
             user: {
                 /** Format: uuid */
@@ -1517,6 +1980,8 @@ export interface components {
             access_token: string;
             /** @enum {string} */
             token_type: "Bearer";
+            /** @description Seconds until access_token expires; refresh before then with POST /v1/auth/refresh. */
+            expires_in?: number;
         };
         Environment: {
             /** Format: uuid */
@@ -2148,6 +2613,56 @@ export interface operations {
             401: components["responses"]["E401"];
             422: components["responses"]["E422"];
             429: components["responses"]["E429"];
+        };
+    };
+    postAuthRefresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success; a new refresh cookie is set. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["UserSession"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            429: components["responses"]["E429"];
+        };
+    };
+    postAuthLogout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Signed out. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            signed_out: boolean;
+                        };
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
         };
     };
     getProjects: {
@@ -3583,6 +4098,890 @@ export interface operations {
             422: components["responses"]["E422"];
         };
     };
+    getProjectPlayers: {
+        parameters: {
+            query?: {
+                /** @description Part of a display name, email or external key (case-insensitive), or a whole player ID. */
+                search?: string;
+                /** @description Page size. */
+                limit?: number;
+                /** @description meta.next_cursor from the previous page. */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlayerSummary"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    getProjectPlayer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlayerAdminProfile"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    getProjectPlayerInventory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["InventoryItem"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    getProjectPlayerCurrency: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Balance"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    getProjectPlayerTransactions: {
+        parameters: {
+            query?: {
+                /** @description Page size. */
+                limit?: number;
+                /** @description meta.next_cursor from the previous page. */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Transaction"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    getProjectPlayerProgression: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Progression"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    getProjectPlayerStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlayerStats"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    getProjectPlayerAchievements: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlayerAchievement"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    getProjectPlayerQuests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlayerQuest"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    postProjectPlayerItemsGrant: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItemMutation"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["GrantResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postProjectPlayerInventoryConsume: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItemMutation"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ConsumeResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postProjectPlayerInventoryEquip: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EquipRequest"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["EquipResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postProjectPlayerInventoryUnequip: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnequipRequest"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["UnequipResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postProjectPlayerCurrencyCredit: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CurrencyMutation"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CurrencyResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postProjectPlayerCurrencySpend: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CurrencyMutation"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CurrencyResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postProjectPlayerXpAward: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["XPAward"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["XPAwardResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postProjectPlayerStatsStatkeyIncrement: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+                /** @description Counter key. */
+                statKey: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatWrite"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["StatIncrementResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postProjectPlayerFlagsFlagkeySet: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+                /** @description Flag key. */
+                flagKey: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["FlagWrite"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["FlagSetResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postProjectPlayerAchievementsKeyClaim: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+                /** @description Definition, leaderboard or achievement key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ClaimResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postProjectPlayerQuestsKeyAccept: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+                /** @description Quest key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlayerQuest"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postProjectPlayerQuestsKeyAbandon: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+                /** @description Quest key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlayerQuest"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postProjectPlayerQuestsKeyClaim: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+                /** @description Quest key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["QuestClaimResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postProjectPlayerLeaderboardsKeyScores: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+                /** @description Definition, leaderboard or achievement key. */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScoreSubmit"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["ScoreResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
     postPlayersRegister: {
         parameters: {
             query?: never;
@@ -4930,7 +6329,10 @@ export interface operations {
             };
             400: components["responses"]["E400"];
             401: components["responses"]["E401"];
+            409: components["responses"]["E409"];
             422: components["responses"]["E422"];
+            429: components["responses"]["E429"];
+            502: components["responses"]["E502"];
             503: components["responses"]["E503"];
         };
     };

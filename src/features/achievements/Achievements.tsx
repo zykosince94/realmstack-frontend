@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { AlertTriangle, Award, EyeOff, Plus, Rocket, Server, UserRound } from "lucide-react";
-import { authHeaders, client, idempotencyKey, unwrap } from "../../api/client";
+import { AlertTriangle, Award, EyeOff, Plus, Rocket, Server } from "lucide-react";
+import { authHeaders, client, unwrap } from "../../api/client";
 import { ApiError } from "../../api/errors";
-import type { AchievementDefinition, PlayerAchievement } from "../../api/types";
+import type { AchievementDefinition } from "../../api/types";
 import { useWorkspace } from "../../app/workspace";
 import { NotPublished, PageTitle } from "../../components/ui";
-import { useAchievementStats, useDraft, useDraftValidation, useInvalidate, usePlayerAchievements, usePublished } from "../../hooks/queries";
-import { describeCondition, errorsFor, indexesWithErrors, progressPercent } from "../../lib/config";
+import { useAchievementStats, useDraft, useDraftValidation, useInvalidate, usePublished } from "../../hooks/queries";
+import { describeCondition, errorsFor, indexesWithErrors } from "../../lib/config";
 import { rewardSummary } from "../goals/GoalFields";
 import { AchievementEditor, catalogFrom } from "./AchievementEditor";
 
@@ -19,18 +19,15 @@ export function Achievements() {
   const published = usePublished().data;
   const validation = useDraftValidation().data;
   const stats = useAchievementStats().data ?? [];
-  const playerAchievements = usePlayerAchievements();
   const [selected, setSelected] = useState<number | "new" | null>(null);
   // Errors from the last rejected save, keyed inside the achievement ("name", "conditions[0].target").
   const [saveIssues, setSaveIssues] = useState<Record<string, string>>({});
-  const [preview, setPreview] = useState(false);
 
   const definitions = draft.data?.achievements ?? [];
   const catalog = catalogFrom(draft.data);
   const errors = validation?.errors ?? [];
   const withErrors = indexesWithErrors(errors, "achievements");
   const claims = new Map(stats.map((s) => [s.key, s.claims]));
-  const progressByKey = new Map((playerAchievements.data ?? []).map((a) => [a.key, a]));
   const base = `/v1/projects/{projectId}/environments/{envId}/achievements` as const;
   const path = { projectId: w.project.id, envId: w.environment.id };
   const dashboard = { headers: authHeaders({ token: w.token }) };
@@ -79,27 +76,13 @@ export function Achievements() {
     });
   }
 
-  async function claim(a: PlayerAchievement) {
-    await w.run(async () => {
-      const header = { "Idempotency-Key": idempotencyKey() };
-      if (a.claimable_by === "player") {
-        await unwrap(client.POST("/v1/players/me/achievements/{key}/claim", { headers: authHeaders({ token: w.demoPlayerToken }), params: { path: { key: a.key }, header } }), w.demoPlayerToken);
-      } else {
-        await unwrap(client.POST("/v1/server/players/{playerId}/achievements/{key}/claim", { headers: authHeaders({ serverCredential: w.serverCredential }), params: { path: { playerId: w.demoPlayerId, key: a.key }, header } }));
-      }
-      await Promise.all([invalidate.player(), invalidate.scope()]);
-      w.notify({ kind: "success", message: `Claimed ${a.name ?? a.key}. Its rewards are tagged so they never count toward other goals.` });
-    });
-  }
-
   const editing = selected === "new" ? blank : selected !== null ? definitions[selected] : null;
   const issues = selected === null ? {} : { ...(selected === "new" ? {} : errorsFor(errors, "achievements", selected)), ...saveIssues };
 
   return (
     <>
-      <PageTitle eyebrow="GOALS" title="Achievements" description="Permanent, passive goals. They complete when their conditions are met and can be claimed once per player. Progress is computed from the ledgers; rewards paid by claims never count toward other goals."
+      <PageTitle eyebrow="GOALS" title="Achievements" description="Permanent, passive goals. They complete when their conditions are met and can be claimed once per player. Progress is computed from the ledgers; rewards paid by claims never count toward other goals. A player's progress and claims are in Players."
         actions={<>
-          <button className={`button ${preview ? "primary" : "secondary"}`} aria-pressed={preview} disabled={!w.demoPlayerToken} title={w.demoPlayerToken ? "" : "Sign in a player in Players first"} onClick={() => setPreview(!preview)}><UserRound size={15} /> Player preview</button>
           <button className="button secondary" disabled={w.busy || !draft.data} onClick={() => select("new")}><Plus size={15} /> New achievement</button>
           <button className="button primary" disabled={w.busy || !draft.data} onClick={() => void publish()}><Rocket size={15} /> Publish</button>
         </>} />
@@ -118,7 +101,6 @@ export function Achievements() {
           {draft.isPending ? <p className="empty-text">Loading achievements…</p>
             : definitions.length === 0 ? <div className="empty-inline"><Award size={21} /><p>No achievements yet. Add one, or define stats and flags first so conditions can track game-world events.</p></div>
             : <div className="card-grid">{definitions.map((a, index) => {
-              const live = progressByKey.get(a.key);
               return (
                 <article key={a.key} className={`achievement-card ${selected === index ? "selected" : ""} ${withErrors.has(index) ? "has-issues" : ""}`}>
                   <button className="card-select" onClick={() => select(index)} aria-label={`Edit ${a.name}`}>
@@ -128,7 +110,6 @@ export function Achievements() {
                     <ul className="condition-list">{a.conditions.map((c, i) => <li key={i}>{describeCondition(c)}</li>)}</ul>
                     <small>{rewardSummary(a.rewards)} · {claims.get(a.key) ?? 0} claim{claims.get(a.key) === 1 ? "" : "s"}</small>
                   </button>
-                  {preview && <PlayerProgress achievement={live} canClaimAsServer={Boolean(w.serverCredential && w.demoPlayerId)} busy={w.busy} onClaim={claim} />}
                 </article>
               );
             })}</div>}
@@ -137,26 +118,5 @@ export function Achievements() {
           onSave={(a) => void save(a)} onDelete={() => void remove(editing.key)} onClose={() => select(null)} />}
       </div>
     </>
-  );
-}
-
-/** How the demo player sees one achievement: status, per-condition progress bars and a Claim action. */
-function PlayerProgress({ achievement, canClaimAsServer, busy, onClaim }: { achievement?: PlayerAchievement; canClaimAsServer: boolean; busy: boolean; onClaim: (a: PlayerAchievement) => void }) {
-  if (!achievement) return <div className="player-progress"><small>Not published yet, so the player cannot see it.</small></div>;
-  const masked = achievement.name === null;
-  return (
-    <div className="player-progress" aria-label={`Player progress for ${achievement.key}`}>
-      <span className={`status-pill ${achievement.status}`}>{achievement.status.replace("_", " ")}</span>
-      {masked ? <small>Hidden from the player until completed.</small> : (achievement.progress ?? []).map((p, i) => (
-        <div key={i} className="progress-line">
-          <div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progressPercent(p)} aria-label={`${p.type} progress`}><span style={{ width: `${progressPercent(p)}%` }} /></div>
-          <small>{p.type === "flag" ? (p.met ? "set" : "not set") : p.has_value ? `${p.current} / ${p.target}` : `no score / ${p.target}`}</small>
-        </div>
-      ))}
-      {achievement.status === "completed" && (achievement.claimable_by === "player" || canClaimAsServer) && (
-        <button className="button primary small" disabled={busy} onClick={() => onClaim(achievement)}>{achievement.claimable_by === "player" ? "Claim" : "Claim as server"}</button>
-      )}
-      {achievement.status === "completed" && achievement.claimable_by === "server" && !canClaimAsServer && <small>Only the game server can claim this. Add a server credential in Inventory &amp; economy.</small>}
-    </div>
   );
 }

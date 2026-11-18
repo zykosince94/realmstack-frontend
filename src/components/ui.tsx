@@ -2,8 +2,24 @@ import type { ReactNode } from "react";
 import { Check, Rocket, X } from "lucide-react";
 import type { Notice } from "../app/workspace";
 
-export function NoticeView({ notice }: { notice: Notice }) {
-  return <div className={`notice ${notice.kind}`} role={notice.kind === "error" ? "alert" : "status"}><span>{notice.kind === "success" ? <Check size={16} /> : <X size={16} />}</span>{notice.message}</div>;
+/** A success or error message. Success notices fade on their own (App); errors stay until dismissed. */
+export function NoticeView({ notice, onDismiss }: { notice: Notice; onDismiss?: () => void }) {
+  return (
+    <div className={`notice ${notice.kind}`} role={notice.kind === "error" ? "alert" : "status"}>
+      <span>{notice.kind === "success" ? <Check size={16} /> : <X size={16} />}</span>
+      <span className="notice-text">{notice.message}</span>
+      {onDismiss && <button type="button" className="notice-close" aria-label="Dismiss" onClick={onDismiss}><X size={14} /></button>}
+    </div>
+  );
+}
+
+/** Credits line shown under every screen and on the sign-in page. */
+export function AppFooter() {
+  return (
+    <footer className="app-footer">
+      Developed by Rishabh Pandey <span aria-hidden="true">|</span> <a href="https://zykosince94.github.io" target="_blank" rel="noreferrer">https://zykosince94.github.io</a>
+    </footer>
+  );
 }
 
 export function PageTitle({ eyebrow, title, description, actions }: { eyebrow: string; title: string; description: string; actions?: ReactNode }) {

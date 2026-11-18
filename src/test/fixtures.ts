@@ -22,7 +22,10 @@ export const base = "/v1/projects/p1/environments/e1";
 
 export function routes(overrides: Record<string, Handler> = {}): Record<string, Handler> {
   return {
-    "POST /v1/auth/login": { body: { access_token: "dash-token", user: { id: "u1", email: "admin@realmstack.local" } } },
+    "POST /v1/auth/login": { body: { access_token: "dash-token", user: { id: "u1", email: "admin@realmstack.local" }, token_type: "Bearer", expires_in: 900 } },
+    // No saved session by default: the app starts at the sign-in form.
+    "POST /v1/auth/refresh": { status: 401, body: { error: { code: "NO_SESSION", message: "There is no dashboard session to resume. Sign in.", details: {} }, meta: { request_id: "test" } } },
+    "POST /v1/auth/logout": { body: { signed_out: true } },
     "GET /v1/projects": { body: [project] },
     "GET /v1/projects/p1/environments": { body: [environment] },
     [`GET ${base}/configurations/draft`]: { body: liveConfig },
@@ -33,6 +36,8 @@ export function routes(overrides: Record<string, Handler> = {}): Record<string, 
     "GET /v1/players/me/inventory": { body: [] },
     "GET /v1/players/me/currency": { body: [] },
     "GET /v1/players/me/transactions": { body: [] },
+    // Project settings shows the AI provider panel; AI off by default in tests.
+    "GET /v1/ai/settings": { body: { configured: false, provider: null, model: null, key_last4: null, base_url: null, updated_at: null, providers: ["openai", "openai_compatible"] } },
     ...overrides,
   };
 }
@@ -41,7 +46,7 @@ export async function signIn() {
   const user = userEvent.setup();
   renderApp();
   // In development builds the demo credentials are prefilled.
-  expect(screen.getByLabelText("Email address")).toHaveValue("admin@realmstack.local");
+  expect(await screen.findByLabelText("Email address")).toHaveValue("admin@realmstack.local");
   await user.click(screen.getByRole("button", { name: /sign in/i }));
   await screen.findByRole("heading", { name: "Star Forge" });
   return user;

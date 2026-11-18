@@ -82,31 +82,6 @@ describe("Achievements", () => {
     expect(within(editor).getByText(/references unknown counter/)).toBeInTheDocument();
   });
 
-  it("previews the player's progress and claims a completed achievement", async () => {
-    let claimed = false;
-    const server = mockApi(achievementRoutes({
-      "GET /v1/players/me/achievements": () => ({ body: [
-        { key: "troll_slayer", hidden: false, status: claimed ? "claimed" : "completed", claimable_by: "player", claimed_at: null, name: "Troll Slayer", description: "", conditions: config.achievements[0].conditions, rewards: config.achievements[0].rewards, progress: [{ type: "stat", current: 3, target: 3, met: true, has_value: true }] },
-        { key: "secret_room", hidden: true, status: "in_progress", claimable_by: "player", claimed_at: null, name: null, description: null, conditions: null, rewards: null, progress: null },
-      ] }),
-      "POST /v1/players/me/achievements/troll_slayer/claim": () => { claimed = true; return { body: { key: "troll_slayer", status: "claimed", claimed_by: "player", claimed_at: "2026-11-16T00:00:00Z", rewards: {} } }; },
-    }));
-    const user = await signIn();
-    await openScreen(user, "Players");
-    await user.click(screen.getByRole("button", { name: "Register player" }));
-    await screen.findByText("Player registered and signed in.");
-    await openScreen(user, "Achievements");
-    await user.click(await screen.findByRole("button", { name: /player preview/i }));
-
-    const progress = await screen.findByLabelText("Player progress for troll_slayer");
-    expect(within(progress).getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
-    expect(within(screen.getByLabelText("Player progress for secret_room")).getByText(/Hidden from the player/)).toBeInTheDocument();
-    await user.click(within(progress).getByRole("button", { name: "Claim" }));
-    await waitFor(() => expect(server.find("POST", "/v1/players/me/achievements/troll_slayer/claim")).toHaveLength(1));
-    expect(server.find("POST", "/v1/players/me/achievements/troll_slayer/claim")[0].headers["Idempotency-Key"]).toBeTruthy();
-    expect(await within(screen.getByLabelText("Player progress for troll_slayer")).findByText("claimed")).toBeInTheDocument();
-  });
-
   it("asks before deleting an achievement from the draft", async () => {
     const server = mockApi(achievementRoutes({ [`DELETE ${base}/achievements/troll_slayer`]: { body: { deleted: true, key: "troll_slayer" } } }));
     const user = await signIn();

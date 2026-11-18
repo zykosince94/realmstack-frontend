@@ -27,8 +27,8 @@ export function Overview() {
           <ol className="steps">
             <li className="done"><span>1</span><div><b>Project and environment ready</b><small>{project.name} · {environment.name}</small></div><Check size={15} /></li>
             <li className={isPublished ? "done" : ""}><span>2</span><div><b>Publish your game catalog</b><small>{isPublished ? `Version ${published?.version} is live` : "Define items and currencies, then publish"}</small></div>{isPublished ? <Check size={15} /> : <ChevronDown size={15} />}</li>
-            <li><span>3</span><div><b>Create a player</b><small>Register with the public environment ID</small></div><ChevronDown size={15} /></li>
-            <li><span>4</span><div><b>Run the service demo</b><small>Grant, spend, earn XP, report stats and claim an achievement</small></div><ChevronDown size={15} /></li>
+            <li><span>3</span><div><b>Create a player</b><small>Register one in Test client with the public environment ID</small></div><ChevronDown size={15} /></li>
+            <li><span>4</span><div><b>Manage the player</b><small>In Players: grant, spend, award XP, set stats and claim achievements</small></div><ChevronDown size={15} /></li>
           </ol>
         </div>
         <div className="panel integration-panel"><div className="panel-heading"><div><h3>Client connection</h3><p>Safe to use in your game client.</p></div><KeyRound size={18} /></div>
@@ -38,7 +38,7 @@ export function Overview() {
           <div className="code-sample"><code>public_environment_id: {pid || "your-public-environment-id"}</code></div>
         </div>
       </div>
-      <div className="demo-banner"><div className="demo-illustration"><Gamepad2 size={22} /></div><div><b>Want to see the full loop?</b><p>Open Players to create a demo player, then explore inventory, currency, XP, scores, stats and achievements.</p></div></div>
+      <div className="demo-banner"><div className="demo-illustration"><Gamepad2 size={22} /></div><div><b>Want to see the full loop?</b><p>Create a demo player in Test client, then open it in Players to grant items and currency, award XP, submit scores, adjust stats and run achievements and quests.</p></div></div>
     </>
   );
 }

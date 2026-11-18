@@ -3,10 +3,13 @@ import type { Environment, Project } from "../api/types";
 
 export type Notice = { kind: "success" | "error"; message: string };
 
+/** The dashboard's screens (the sidebar order lives in App). */
+export type ScreenId = "overview" | "players" | "economy" | "progression" | "leaderboards" | "stats" | "achievements" | "quests" | "ai" | "client" | "settings";
+
 /**
  * Everything a feature screen needs from the shell: who is signed in, which project
- * and environment are selected, the demo player and server credential used by the
- * service consoles, and the shared action runner that owns busy/notice state.
+ * and environment are selected, the Test client's demo player, and the shared action
+ * runner that owns busy/notice state.
  */
 export type Workspace = {
   token: string;
@@ -16,12 +19,12 @@ export type Workspace = {
   setProject: (project: Project) => void;
   setEnvironments: (environments: Environment[]) => void;
   onProjectArchived: () => void;
+  /** Switches the dashboard to another screen, e.g. from the AI assistant to its settings. */
+  openScreen: (screen: ScreenId) => void;
   demoPlayerId: string;
   setDemoPlayerId: (id: string) => void;
   demoPlayerToken: string;
   setDemoPlayerToken: (token: string) => void;
-  serverCredential: string;
-  setServerCredential: (credential: string) => void;
   busy: boolean;
   /** Runs one user action: sets busy, clears the notice, and reports failures. Never nest run inside run. */
   run: (work: () => Promise<void>) => Promise<void>;

@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { Activity, ArrowUpRight, CircleHelp, Gamepad2, Rocket, ShieldCheck } from "lucide-react";
 import type { Notice } from "../../app/workspace";
-import { NoticeView } from "../../components/ui";
+import { AppFooter, NoticeView } from "../../components/ui";
 
 // Written inline (not via a helper) so production builds can drop the demo credentials entirely.
 const DEMO_LOGIN = import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE === "true"
   ? { email: "admin@realmstack.local", password: "RealmStackLocal!2026" }
   : null;
 
-export function LoginScreen({ busy, notice, onAuthenticate }: {
+export function LoginScreen({ busy, notice, onDismiss, onAuthenticate }: {
   busy: boolean;
   notice: Notice | null;
+  onDismiss: () => void;
   onAuthenticate: (mode: "login" | "register", email: string, password: string) => Promise<void>;
 }) {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -42,9 +43,10 @@ export function LoginScreen({ busy, notice, onAuthenticate }: {
           </form>
           <div className="mode-toggle">{mode === "login" ? "New to RealmStack?" : "Already have an account?"} <button onClick={() => setMode(mode === "login" ? "register" : "login")}>{mode === "login" ? "Create account" : "Sign in"}</button></div>
           {mode === "login" && DEMO_LOGIN && <div className="demo-hint"><CircleHelp size={15} /><span>Demo login: <b>{DEMO_LOGIN.email}</b><br />Password: <b>{DEMO_LOGIN.password}</b> (local seed)</span></div>}
-          {notice && <NoticeView notice={notice} />}
+          {notice && <NoticeView notice={notice} onDismiss={onDismiss} />}
         </div>
       </div>
+      <AppFooter />
     </div>
   );
 }

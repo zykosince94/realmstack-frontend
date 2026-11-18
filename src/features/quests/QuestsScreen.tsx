@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
-import { AlertTriangle, LayoutGrid, List, Network, Plus, Rocket, ScrollText, UserRound } from "lucide-react";
-import { authHeaders, client, idempotencyKey, unwrap } from "../../api/client";
+import { AlertTriangle, LayoutGrid, List, Network, Plus, Rocket, ScrollText } from "lucide-react";
+import { authHeaders, client, unwrap } from "../../api/client";
 import { ApiError } from "../../api/errors";
-import type { Config, PlayerQuest, QuestDefinition } from "../../api/types";
+import type { Config, QuestDefinition } from "../../api/types";
 import { useWorkspace } from "../../app/workspace";
 import { NotPublished, PageTitle } from "../../components/ui";
-import { useDraft, useDraftValidation, useInvalidate, usePlayerQuests, usePublished, useQuestStats } from "../../hooks/queries";
+import { useDraft, useDraftValidation, useInvalidate, usePublished, useQuestStats } from "../../hooks/queries";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { defaultCondition, errorsFor, indexesWithErrors } from "../../lib/config";
 import { autoLayout, chainsOf, connect, disconnect, layoutOf, placeNodes, withQuests, type Position, type QuestLayout } from "../../lib/quests";
@@ -13,7 +13,6 @@ import { catalogFrom } from "../goals/GoalFields";
 import { QuestCanvas } from "./QuestCanvas";
 import { QuestEditor } from "./QuestEditor";
 import { QuestList } from "./QuestList";
-import type { QuestAction } from "./QuestPreview";
 
 /** Below this width the canvas falls back to a list plus the side panel (spec 8). */
 export const NARROW_QUERY = "(max-width: 900px)";
@@ -27,8 +26,9 @@ function blankQuest(firstFlag: string | undefined): QuestDefinition {
 
 /**
  * The Quests screen: a graph of the draft's quests (or a list on narrow screens), a
- * side-panel editor, the draft's validation issues, quest statistics and a player
- * preview. Loaded lazily, so React Flow, dagre and dnd-kit download only here.
+ * side-panel editor, the draft's validation issues, quest statistics.
+ * What individual players do (accept, abandon, claim) is in Players. Loaded lazily, so React
+ * Flow, dagre and dnd-kit download only here.
  */
 export default function QuestsScreen() {
   const w = useWorkspace();
@@ -37,13 +37,11 @@ export default function QuestsScreen() {
   const published = usePublished().data;
   const validation = useDraftValidation().data;
   const statsRows = useQuestStats().data;
-  const playerQuests = usePlayerQuests();
   const narrow = useMediaQuery(NARROW_QUERY);
   const [listView, setListView] = useState(false);
   const [selected, setSelected] = useState<string | "new" | null>(null);
   // Errors from the last rejected save, keyed inside the quest ("stages[0].name").
   const [saveIssues, setSaveIssues] = useState<Record<string, string>>({});
-  const [preview, setPreview] = useState(false);
 
   const config = draft.data;
   const quests = useMemo(() => config?.quests ?? [], [config]);
@@ -52,8 +50,6 @@ export default function QuestsScreen() {
   const errors = useMemo(() => validation?.errors ?? [], [validation]);
   const issueIndexes = useMemo(() => indexesWithErrors(errors, "quests"), [errors]);
   const stats = useMemo(() => new Map((statsRows ?? []).map((s) => [s.key, s])), [statsRows]);
-  const live = useMemo(() => new Map((playerQuests.data ?? []).map((q) => [q.key, q])), [playerQuests.data]);
-  const canActAsServer = Boolean(w.serverCredential && w.demoPlayerId);
   const showList = narrow || listView;
 
   const base = `/v1/projects/{projectId}/environments/{envId}/quests` as const;
@@ -159,30 +155,15 @@ export default function QuestsScreen() {
     });
   }
 
-  const act = useCallback((quest: PlayerQuest, action: QuestAction) => {
-    void w.run(async () => {
-      const params = { path: { key: quest.key }, header: { "Idempotency-Key": idempotencyKey() } };
-      const player = { headers: authHeaders({ token: w.demoPlayerToken }), params };
-      if (action === "accept") await unwrap(client.POST("/v1/players/me/quests/{key}/accept", player), w.demoPlayerToken);
-      else if (action === "abandon") await unwrap(client.POST("/v1/players/me/quests/{key}/abandon", player), w.demoPlayerToken);
-      else if (quest.claimable_by === "player") await unwrap(client.POST("/v1/players/me/quests/{key}/claim", player), w.demoPlayerToken);
-      else await unwrap(client.POST("/v1/server/players/{playerId}/quests/{key}/claim", { headers: authHeaders({ serverCredential: w.serverCredential }), params: { ...params, path: { playerId: w.demoPlayerId, key: quest.key } } }));
-      await Promise.all([invalidate.player(), invalidate.scope()]);
-      const done = { accept: "Accepted", abandon: "Abandoned", claim: "Claimed the earned rewards of" }[action];
-      w.notify({ kind: "success", message: `${done} ${quest.name}.` });
-    });
-  }, [w, invalidate]);
-
   const onEdit = useCallback((index: number) => select(quests[index]?.key ?? null), [quests, select]);
   const onReject = useCallback((message: string) => w.notify({ kind: "error", message }), [w]);
 
-  const shared = { quests, issueIndexes, selectedKey: selectedIndex >= 0 ? quests[selectedIndex].key : null, stats, live, preview, canActAsServer, busy: w.busy, onEdit, onAction: act };
+  const shared = { quests, issueIndexes, selectedKey: selectedIndex >= 0 ? quests[selectedIndex].key : null, stats, onEdit };
 
   return (
     <>
       <PageTitle eyebrow="GOALS" title="Quests" description="Active, staged goals. Players accept a quest, complete its stages in order and claim stage and completion rewards. Drag between nodes to add a prerequisite; drop a node in a lane to set its chain."
         actions={<>
-          <button className={`button ${preview ? "primary" : "secondary"}`} aria-pressed={preview} disabled={!w.demoPlayerToken} title={w.demoPlayerToken ? "" : "Sign in a player in Players first"} onClick={() => setPreview(!preview)}><UserRound size={15} /> Player preview</button>
           {!narrow && <button className="button secondary" aria-pressed={listView} onClick={() => setListView(!listView)}>{listView ? <><Network size={15} /> Canvas</> : <><List size={15} /> List</>}</button>}
           {!showList && <button className="button secondary" disabled={w.busy || !config || quests.length === 0} onClick={() => void arrange()}><LayoutGrid size={15} /> Auto-arrange</button>}
           <button className="button secondary" disabled={w.busy || !config} onClick={() => select("new")}><Plus size={15} /> New quest</button>

@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 
-export type MockResponse = { status?: number; body?: unknown };
+/** meta is merged into the success envelope's meta (e.g. { next_cursor } for pagination). */
+export type MockResponse = { status?: number; body?: unknown; meta?: Record<string, unknown> };
 export type Handler = MockResponse | ((request: RecordedRequest) => MockResponse);
 export type RecordedRequest = { method: string; path: string; query: URLSearchParams; headers: Record<string, string>; body: unknown };
 
@@ -28,8 +29,8 @@ export function mockApi(routes: Record<string, Handler>) {
     if (!handler) {
       return new Response(JSON.stringify({ error: { code: "NOT_FOUND", message: `No mock for ${recorded.method} ${url.pathname}` } }), { status: 404, headers: { "Content-Type": "application/json" } });
     }
-    const { status = 200, body } = typeof handler === "function" ? handler(recorded) : handler;
-    const payload = status >= 400 ? body : { data: body, meta: { request_id: "test" } };
+    const { status = 200, body, meta } = typeof handler === "function" ? handler(recorded) : handler;
+    const payload = status >= 400 ? body : { data: body, meta: { request_id: "test", ...meta } };
     return new Response(JSON.stringify(payload), { status, headers: { "Content-Type": "application/json" } });
   });
   vi.stubGlobal("fetch", fetchMock);

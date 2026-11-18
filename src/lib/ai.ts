@@ -24,8 +24,34 @@ export function generates(op: string): boolean {
   return op !== "explain" && op !== "tests";
 }
 
-/** Model IDs offered as suggestions; any ID the provider accepts can be typed. */
+/** Model IDs offered as suggestions for OpenAI; any ID the provider accepts can be typed. */
 export const suggestedModels = ["gpt-6.1-sol", "gpt-6.1-terra", "gpt-5.5", "gpt-5.4-mini"];
+
+export type ProviderId = "openai" | "openai_compatible";
+
+export const providerLabels: Record<ProviderId, string> = { openai: "OpenAI", openai_compatible: "OpenAI-compatible" };
+
+/** Narrows what the API returned to a provider this screen knows. */
+export function asProvider(value: string | null | undefined): ProviderId {
+  return value === "openai_compatible" ? "openai_compatible" : "openai";
+}
+
+/** The host of a base URL for display (the full URL can be long); the input if it does not parse. */
+export function hostOf(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * Whether saving would send the stored key somewhere new. The server refuses to keep a
+ * stored key for a different provider or base URL, so the form then requires the key.
+ */
+export function destinationChanged(saved: { provider: string | null; base_url: string | null }, provider: ProviderId, baseUrl: string): boolean {
+  return asProvider(saved.provider) !== provider || (provider === "openai_compatible" && (saved.base_url ?? "") !== baseUrl.trim().replace(/\/+$/, ""));
+}
 
 /** Only the fields the operation uses, without empty values. */
 export function paramsFor(op: AIOperation, params: AIParams): AIParams {

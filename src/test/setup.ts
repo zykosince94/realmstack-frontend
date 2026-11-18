@@ -5,4 +5,6 @@ import { afterEach, vi } from "vitest";
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  // The app remembers the open screen across reloads; every test starts fresh.
+  sessionStorage.clear();
 });

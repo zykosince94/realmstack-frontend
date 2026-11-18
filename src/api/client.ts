@@ -27,7 +27,7 @@ export function authHeaders(auth: Auth = {}): Record<string, string> {
   return headers;
 }
 
-type Envelope<T> = { data?: { data: T }; error?: unknown; response: Response };
+type Envelope<T> = { data?: { data: T; meta?: { next_cursor?: string } }; error?: unknown; response: Response };
 
 /**
  * Awaits an openapi-fetch call and returns the envelope's `data`, or throws an ApiError
@@ -44,4 +44,12 @@ export async function unwrap<T>(call: Promise<Envelope<T>>, token?: string): Pro
 /** A fresh key for one logical mutation; reuse it only when retrying that mutation. */
 export function idempotencyKey(): string {
   return crypto.randomUUID();
+}
+
+/** Like unwrap, for a cursor-paginated list: the page's rows and the cursor for the next one. */
+export async function unwrapPage<T>(call: Promise<Envelope<T>>, token?: string): Promise<{ rows: T; nextCursor?: string }> {
+  const result = await call;
+  if (!result.response.ok || result.error !== undefined) throw toApiError(result.error, result.response.status, token);
+  if (!result.data) throw toApiError("", result.response.status, token);
+  return { rows: result.data.data, nextCursor: result.data.meta?.next_cursor };
 }

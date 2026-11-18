@@ -128,3 +128,77 @@ export function indexesWithErrors(errors: FieldError[], collection: string): Set
   }
   return out;
 }
+
+/** The "format" of a RealmStack configuration export file. */
+export const configFileFormat = "realmstack.configuration";
+
+/**
+ * Wraps a configuration for download. The envelope says what the file is and where it
+ * came from, so an import can refuse a file that is something else; the configuration
+ * itself is exactly what the draft and publish APIs accept.
+ */
+export function exportConfiguration(config: Config, source: { project: string; slug: string; environment: string; version?: number }, now = new Date()) {
+  return {
+    format: configFileFormat,
+    version: 1,
+    exported_at: now.toISOString(),
+    source: { project: source.project, slug: source.slug, environment: source.environment, ...(source.version ? { configuration_version: source.version } : {}) },
+    config,
+  };
+}
+
+/**
+ * Reads an import file: a RealmStack export, or a bare configuration object (what the
+ * JSON editor shows). Throws an Error with a message for the user when the file is not
+ * a configuration. Only the shape is checked here; the server validates the contents
+ * (references, cycles, reachable levels) when the draft is saved and published.
+ */
+export function parseConfigurationFile(text: string): Config {
+  let data: unknown;
+  try { data = JSON.parse(text); } catch { throw new Error("The file is not valid JSON."); }
+  if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("The file does not contain a RealmStack configuration.");
+  const file = data as Record<string, unknown>;
+  let config = file;
+  if ("format" in file) {
+    if (file.format !== configFileFormat) throw new Error("The file is not a RealmStack configuration export.");
+    if (typeof file.version === "number" && file.version > 1) throw new Error("The file was exported by a newer RealmStack and cannot be imported here.");
+    if (!file.config || typeof file.config !== "object") throw new Error("The export file has no configuration in it.");
+    config = file.config as Record<string, unknown>;
+  }
+  for (const key of ["items", "currencies", "progression", "leaderboards"] as const) {
+    if (!Array.isArray(config[key])) throw new Error(`The configuration needs an "${key}" list.`);
+  }
+  for (const key of ["stats", "achievements", "quests"] as const) {
+    if (key in config && !Array.isArray(config[key])) throw new Error(`"${key}" must be a list.`);
+  }
+  return { ...emptyConfig(), ...config } as Config;
+}
+
+/** How many definitions a configuration holds (the XP curve counts as one). */
+export function definitionCount(config: Config): number {
+  return config.items.length + config.currencies.length + config.leaderboards.length + (config.stats?.length ?? 0) +
+    (config.achievements?.length ?? 0) + (config.quests?.length ?? 0) + (config.progression.length ? 1 : 0);
+}
+
+/** Reads a chosen file as text (FileReader where Blob.text is missing, e.g. older engines). */
+export function readFileText(file: Blob): Promise<string> {
+  if (typeof file.text === "function") return file.text();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error ?? new Error("The file could not be read."));
+    reader.readAsText(file);
+  });
+}
+
+/** Starts a browser download of a JSON document. */
+export function downloadJSON(filename: string, data: unknown) {
+  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2) + "\n"], { type: "application/json" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}

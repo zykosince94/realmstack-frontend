@@ -1,26 +1,32 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { History, PowerOff, Sparkles } from "lucide-react";
+import { ArrowRight, Award, CircleHelp, Coins, History, ListChecks, Package, PowerOff, ScrollText, Settings2, Sparkles, TrendingUp, type LucideIcon } from "lucide-react";
 import { authHeaders, client, unwrap } from "../../api/client";
 import { ApiError } from "../../api/errors";
-import type { AIOperation, AIParams, AIProposal } from "../../api/types";
+import type { AIOperation, AIParams, AIProposal, AISettings } from "../../api/types";
 import { useWorkspace } from "../../app/workspace";
 import { PageTitle, Panel } from "../../components/ui";
 import { keys, useAIGeneration, useAIGenerations, useAISettings, useDraft, useInvalidate, useReportError } from "../../hooks/queries";
-import { generates, operationLabel, operations, paramsFor } from "../../lib/ai";
-import { AISettingsCard } from "./AISettingsCard";
+import { asProvider, generates, hostOf, operationLabel, operations, paramsFor, providerLabels } from "../../lib/ai";
 import { GenerationView } from "./GenerationView";
+
+const operationIcons: Record<AIOperation, LucideIcon> = {
+  items: Package, economy: Coins, progression: TrendingUp, achievements: Award, quests: ScrollText, explain: CircleHelp, tests: ListChecks,
+};
+
+const intro = "Describe what you need; the assistant proposes definitions, the server validates them like hand-written configuration, and nothing changes until you apply and publish.";
 
 /**
  * The AI configuration assistant (spec 2.8, 8). It proposes; people decide. A proposal
  * is validated by the server like hand-written configuration, is applied to the draft
- * only when someone clicks Apply, and goes live only through Publish.
+ * only when someone clicks Apply, and goes live only through Publish. The provider and
+ * key live in Project settings (they belong to the user, not the project).
  */
 export default function AIAssistant() {
+  const w = useWorkspace();
   const settings = useAISettings();
   const disabled = settings.error instanceof ApiError && settings.error.code === "AI_UNAVAILABLE";
   useReportError(disabled ? null : settings.error, "Could not load AI settings.");
-  const intro = "Generate catalog, economy, progression, achievement and quest drafts with your own OpenAI key. Every proposal is validated like hand-written configuration, and nothing changes until you apply it and publish.";
 
   if (disabled) {
     return (
@@ -31,15 +37,37 @@ export default function AIAssistant() {
       </>
     );
   }
+  const data = settings.data;
   return (
     <>
-      <PageTitle eyebrow="ASSISTANT" title="AI assistant" description={intro} />
-      {settings.isPending ? <p className="empty-text">Loading AI settings…</p> : settings.data ? <Workspace configured={settings.data.configured} settingsCard={<AISettingsCard key={settings.data.updated_at ?? "new"} settings={settings.data} />} /> : null}
+      <PageTitle eyebrow="ASSISTANT" title="AI assistant" description={intro}
+        actions={<>
+          {data?.configured && <ProviderChip settings={data} />}
+          <button className="button secondary" onClick={() => w.openScreen("settings")}><Settings2 size={14} /> Provider settings</button>
+        </>} />
+      {settings.isPending ? <p className="empty-text">Loading AI settings…</p> : data ? (
+        <>
+          {!data.configured && (
+            <div className="ai-connect" role="status">
+              <div className="demo-illustration"><Sparkles size={18} /></div>
+              <div><b>Connect an AI provider to start</b><p>Add an OpenAI key, or any OpenAI-compatible service such as OpenRouter, in Project settings. The key is encrypted and only your configuration draft is ever sent.</p></div>
+              <button className="button primary" onClick={() => w.openScreen("settings")}>Open settings <ArrowRight size={14} /></button>
+            </div>
+          )}
+          <Workspace configured={data.configured} />
+        </>
+      ) : null}
     </>
   );
 }
 
-function Workspace({ configured, settingsCard }: { configured: boolean; settingsCard: ReactNode }) {
+function ProviderChip({ settings }: { settings: AISettings }) {
+  const provider = providerLabels[asProvider(settings.provider)];
+  const where = settings.base_url ? hostOf(settings.base_url) : provider;
+  return <span className="provider-chip" title={`${provider} · ${settings.model}`}><span className="status-dot" />{where} · <code>{settings.model}</code></span>;
+}
+
+function Workspace({ configured }: { configured: boolean }) {
   const w = useWorkspace();
   const queryClient = useQueryClient();
   const invalidate = useInvalidate();
@@ -104,25 +132,32 @@ function Workspace({ configured, settingsCard }: { configured: boolean; settings
 
   const set = (patch: AIParams) => setParams((p) => ({ ...p, ...patch }));
   const num = (value: string) => (value === "" ? undefined : Number(value));
+  const items = history.data ?? [];
 
   return (
     <div className="ai-layout">
       <div className="ai-side">
-        {settingsCard}
-        <Panel title="Generate" subtitle={operation.description} icon={<Sparkles size={18} />}>
+        <Panel title="New proposal" subtitle={operation.description} icon={<Sparkles size={18} />} className="ai-composer">
           <form className="stack-form" onSubmit={(event) => { event.preventDefault(); void generate(); }}>
-            <label>What to generate
-              <select value={op} onChange={(event) => setOp(event.target.value as AIOperation)}>
-                {operations.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
-              </select>
-            </label>
-            {operation.fields.includes("brief") && <label>Brief<textarea rows={3} maxLength={2000} value={params.brief ?? ""} onChange={(event) => set({ brief: event.target.value })} placeholder="Genre, theme, tone, constraints…" /></label>}
-            {operation.fields.includes("question") && <label>Question<textarea rows={3} maxLength={2000} required value={params.question ?? ""} onChange={(event) => set({ question: event.target.value })} placeholder="Which quests unlock after the tutorial?" /></label>}
-            {operation.fields.includes("count") && <label>How many<input type="number" min={1} max={50} value={params.count ?? ""} onChange={(event) => set({ count: num(event.target.value) })} placeholder="default" /></label>}
-            {operation.fields.includes("levels") && <label>Levels<input type="number" min={2} max={200} value={params.levels ?? ""} onChange={(event) => set({ levels: num(event.target.value) })} placeholder="20" /></label>}
-            {operation.fields.includes("pacing") && <label>Pacing<select value={params.pacing ?? "steady"} onChange={(event) => set({ pacing: event.target.value as AIParams["pacing"] })}><option value="gentle">Gentle</option><option value="steady">Steady</option><option value="steep">Steep</option></select></label>}
-            {operation.fields.includes("quest_type") && <label>Quest type<select value={params.quest_type ?? "story"} onChange={(event) => set({ quest_type: event.target.value as AIParams["quest_type"] })}>{["story", "side", "daily", "weekly", "event"].map((t) => <option key={t} value={t}>{t}</option>)}</select></label>}
-            {operation.fields.includes("stage_count") && <label>Stages per quest<input type="number" min={1} max={20} value={params.stage_count ?? ""} onChange={(event) => set({ stage_count: num(event.target.value) })} placeholder="3" /></label>}
+            <div className="op-grid" role="radiogroup" aria-label="What to generate">
+              {operations.map((o) => {
+                const Icon = operationIcons[o.id];
+                return (
+                  <button key={o.id} type="button" role="radio" aria-checked={o.id === op} className={`op-tile ${o.id === op ? "selected" : ""}`} onClick={() => setOp(o.id)}>
+                    <Icon size={14} /><span>{o.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {operation.fields.includes("brief") && <label>Brief<textarea rows={4} maxLength={2000} value={params.brief ?? ""} onChange={(event) => set({ brief: event.target.value })} placeholder="Genre, theme, tone, constraints…" /></label>}
+            {operation.fields.includes("question") && <label>Question<textarea rows={4} maxLength={2000} required value={params.question ?? ""} onChange={(event) => set({ question: event.target.value })} placeholder="Which quests unlock after the tutorial?" /></label>}
+            <div className="ai-fields">
+              {operation.fields.includes("count") && <label>How many<input type="number" min={1} max={50} value={params.count ?? ""} onChange={(event) => set({ count: num(event.target.value) })} placeholder="default" /></label>}
+              {operation.fields.includes("levels") && <label>Levels<input type="number" min={2} max={200} value={params.levels ?? ""} onChange={(event) => set({ levels: num(event.target.value) })} placeholder="20" /></label>}
+              {operation.fields.includes("pacing") && <label>Pacing<select value={params.pacing ?? "steady"} onChange={(event) => set({ pacing: event.target.value as AIParams["pacing"] })}><option value="gentle">Gentle</option><option value="steady">Steady</option><option value="steep">Steep</option></select></label>}
+              {operation.fields.includes("quest_type") && <label>Quest type<select value={params.quest_type ?? "story"} onChange={(event) => set({ quest_type: event.target.value as AIParams["quest_type"] })}>{["story", "side", "daily", "weekly", "event"].map((t) => <option key={t} value={t}>{t}</option>)}</select></label>}
+              {operation.fields.includes("stage_count") && <label>Stages per quest<input type="number" min={1} max={20} value={params.stage_count ?? ""} onChange={(event) => set({ stage_count: num(event.target.value) })} placeholder="3" /></label>}
+            </div>
             {generates(op) && op !== "progression" && (
               <label>If a key already exists
                 <select value={policy} onChange={(event) => setPolicy(event.target.value as "add" | "replace")}>
@@ -131,26 +166,43 @@ function Workspace({ configured, settingsCard }: { configured: boolean; settings
                 </select>
               </label>
             )}
-            <button className="button primary" disabled={w.busy || !configured || !draft.data} title={configured ? "" : "Add an API key first"}><Sparkles size={15} /> Generate</button>
+            <button className="button primary wide" disabled={w.busy || !configured || !draft.data} title={configured ? "" : "Connect a provider in Project settings first"}><Sparkles size={15} /> Generate</button>
           </form>
         </Panel>
-      </div>
-      <div className="ai-main">
-        {generation.data
-          ? <GenerationView generation={generation.data} draft={draft.data} busy={w.busy} published={publishedIds.includes(generation.data.id)}
-              onApply={() => void apply(generation.data!.id, countOf(generation.data!.proposal))} onDiscard={() => void discard(generation.data!.id)} onPublish={() => void publish(generation.data!.id)} />
-          : <div className="empty-inline"><Sparkles size={21} /><p>{configured ? "Describe what you need and generate a proposal. You review it before anything changes." : "Add your OpenAI API key to start."}</p></div>}
-        <Panel title="History" subtitle="Recent generations in this environment." icon={<History size={18} />}>
+        <Panel title="History" subtitle="Recent generations in this environment." icon={<History size={18} />} className="ai-history">
           {history.isPending ? <p className="empty-text">Loading…</p>
-            : (history.data ?? []).length === 0 ? <p className="empty-text">Nothing generated yet.</p>
-            : <ul className="generation-history">{(history.data ?? []).map((g) => (
+            : items.length === 0 ? <p className="empty-text">Nothing generated yet.</p>
+            : <ul className="generation-history">{items.map((g) => (
               <li key={g.id}><button className={`link-row ${g.id === selected ? "selected" : ""}`} onClick={() => setSelected(g.id)}>
                 <span>{operationLabel(g.operation)}</span><span className={`status-pill ${g.status}`}>{g.status}</span><small>{new Date(g.created_at).toLocaleString()}</small>
               </button></li>
             ))}</ul>}
         </Panel>
       </div>
+      <div className="ai-main">
+        {generation.data
+          ? <GenerationView generation={generation.data} draft={draft.data} busy={w.busy} published={publishedIds.includes(generation.data.id)}
+              onApply={() => void apply(generation.data!.id, countOf(generation.data!.proposal))} onDiscard={() => void discard(generation.data!.id)} onPublish={() => void publish(generation.data!.id)} />
+          : <ReviewPlaceholder configured={configured} />}
+      </div>
     </div>
+  );
+}
+
+/** The review area before a generation is selected: how the human-in-the-loop flow works. */
+function ReviewPlaceholder({ configured }: { configured: boolean }) {
+  const steps = [
+    ["Describe", "Pick what to generate and write a short brief."],
+    ["Review", "The server validates the proposal like hand-written configuration."],
+    ["Apply", "A valid proposal is merged into the draft only when you click Apply."],
+    ["Publish", "Nothing reaches players until you publish the draft."],
+  ];
+  return (
+    <section className="panel ai-placeholder" aria-label="Review">
+      <div className="ai-placeholder-head"><Sparkles size={20} /><div><h3>Proposals appear here for review</h3>
+        <p>{configured ? "Generate one on the left, or pick a past generation from History." : "Connect a provider in Project settings, then generate your first proposal."}</p></div></div>
+      <ol className="ai-steps">{steps.map(([title, text], i) => <li key={title}><span>{i + 1}</span><div><b>{title}</b><small>{text}</small></div></li>)}</ol>
+    </section>
   );
 }
 

@@ -30,6 +30,7 @@ export function GenerationView({ generation: g, draft, busy, published, onApply,
           <p>{g.model} · {new Date(g.created_at).toLocaleString()} · {usageLabel(g.usage)}</p>
         </div>
       </div>
+      <div className="generation-body">
       {running && <p className="generation-running" role="status"><Loader2 size={16} className="spin" /> Generating… this can take a minute. You can leave this screen; it keeps running.</p>}
       {g.error && <div className="notice error" role="alert"><span><X size={16} /></span>{g.error.message} <code>{g.error.code}</code></div>}
       {g.notes && <p className="generation-notes">{g.notes}</p>}
@@ -57,14 +58,19 @@ export function GenerationView({ generation: g, draft, busy, published, onApply,
       )}
 
       {g.proposal && <details className="generation-json"><summary>Proposal JSON</summary><pre>{JSON.stringify(g.proposal, null, 2)}</pre></details>}
-
-      <div className="button-row">
-        {g.status === "valid" && <button className="button primary" disabled={busy} onClick={onApply}><Check size={15} /> Apply to draft</button>}
-        {finished && <button className="button secondary" disabled={busy} onClick={onDiscard}>Discard</button>}
-        {g.status === "applied" && !published && <button className="button primary" disabled={busy} onClick={onPublish}><Rocket size={15} /> Publish draft</button>}
       </div>
-      {g.status === "valid" && <p className="small-note">Applying changes only the draft. Nothing reaches players until you publish.</p>}
-      {g.status === "applied" && <p className="small-note">{published ? "Published." : "Applied to the draft. Review it in the editors, then publish to make it live."}</p>}
+
+      {(finished || g.status === "applied") && (
+        <div className="generation-footer">
+          <div className="button-row">
+            {g.status === "valid" && <button className="button primary" disabled={busy} onClick={onApply}><Check size={15} /> Apply to draft</button>}
+            {g.status === "applied" && !published && <button className="button primary" disabled={busy} onClick={onPublish}><Rocket size={15} /> Publish draft</button>}
+            {finished && <button className="button secondary" disabled={busy} onClick={onDiscard}>Discard</button>}
+          </div>
+          {g.status === "valid" && <p className="small-note">Applying changes only the draft. Nothing reaches players until you publish.</p>}
+          {g.status === "applied" && <p className="small-note">{published ? "Published." : "Applied to the draft. Review it in the editors, then publish to make it live."}</p>}
+        </div>
+      )}
     </section>
   );
 }

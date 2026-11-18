@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { apiError, mockApi } from "../test/mockApi";
@@ -28,38 +28,22 @@ describe("App", () => {
     mockApi(routes({ "GET /v1/projects/p1/environments": apiError(401, "UNAUTHORIZED", "A valid access token is required.") }));
     const user = userEvent.setup();
     renderApp();
-    await user.click(screen.getByRole("button", { name: /sign in/i }));
+    await user.click(await screen.findByRole("button", { name: /sign in/i }));
     expect(await screen.findByText("Your session expired. Please sign in again.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
   });
 
-  it("sends the visible dropdown choice and the item's own slot", async () => {
-    const server = mockApi(routes({
-      "POST /v1/server/players/player-1/items/grant": { body: { owned: 1 } },
-      "POST /v1/players/me/inventory/equip": { body: { slot: "weapon", item_key: "iron_sword" } },
-    }));
+  it("shows the live catalog on Inventory & economy and leaves player actions to Players", async () => {
+    mockApi(routes());
     const user = await signIn();
-    await openScreen(user, "Players");
-    await user.click(screen.getByRole("button", { name: "Register player" }));
-    await screen.findByText("Player registered and signed in.");
-
     await openScreen(user, "Inventory & economy");
-    await user.type(await screen.findByLabelText("Server credential"), "rs_test.secret");
-    // Only items with a metadata.slot are offered for equipping, with the slot filled in.
-    const equipSelect = await screen.findByRole("combobox", { name: "Item to equip" });
-    expect(within(equipSelect).getAllByRole("option").map((o) => o.textContent)).toEqual(["Iron Sword"]);
-    expect(screen.getByDisplayValue("weapon")).toHaveAttribute("readonly");
-
-    await user.click(screen.getByRole("button", { name: "Grant item" }));
-    await waitFor(() => expect(server.find("POST", "/v1/server/players/player-1/items/grant")).toHaveLength(1));
-    const grant = server.find("POST", "/v1/server/players/player-1/items/grant")[0];
-    expect(grant.body).toEqual({ item_key: "health_potion", quantity: 1 });
-    expect(grant.headers["X-Server-Credential"]).toBe("rs_test.secret");
-    expect(grant.headers["Idempotency-Key"]).toBeTruthy();
-
-    await user.click(screen.getByRole("button", { name: "Equip item" }));
-    await waitFor(() => expect(server.find("POST", "/v1/players/me/inventory/equip")).toHaveLength(1));
-    expect(server.find("POST", "/v1/players/me/inventory/equip")[0].body).toEqual({ item_key: "iron_sword", slot: "weapon" });
+    expect(await screen.findByText("Health Potion")).toBeInTheDocument();
+    expect(screen.getByText("Iron Sword")).toBeInTheDocument();
+    // Nothing here acts on a player: no server credential field, no grant or spend forms.
+    expect(screen.queryByLabelText("Server credential")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Grant item" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Open Players" }));
+    expect(await screen.findByRole("heading", { name: "Players" })).toBeInTheDocument();
   });
 
   it("asks for confirmation before revoking a credential", async () => {

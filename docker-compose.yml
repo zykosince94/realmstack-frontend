@@ -43,6 +43,8 @@ services:
       DEMO_MODE: ${DEMO_MODE:-true}
       # Optional AI assistant: set AI_ENCRYPTION_KEY in .env to enable it (see .env.example).
       AI_ENCRYPTION_KEY: ${AI_ENCRYPTION_KEY:-}
+      # OpenAI-compatible providers: allow http and private addresses (a local Ollama).
+      AI_ALLOW_PRIVATE_URLS: ${AI_ALLOW_PRIVATE_URLS:-false}
     ports:
       - "127.0.0.1:${API_PORT:-8080}:8080"
     depends_on:

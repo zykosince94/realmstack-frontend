@@ -2,9 +2,8 @@ import { memo, useEffect, useMemo } from "react";
 import { Background, Controls, Handle, MarkerType, MiniMap, Position, ReactFlow, useNodesState, type Connection, type Edge, type Node, type NodeProps } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { GripHorizontal, Repeat, Server, Sparkles, Timer } from "lucide-react";
-import type { PlayerQuest, QuestDefinition, QuestStat } from "../../api/types";
+import type { QuestDefinition, QuestStat } from "../../api/types";
 import { LANE_HEIGHT, laneIndexForY, lanesOf, laneTop, NODE_WIDTH, placeNodes, wouldCreateCycle, type Position as XY, type QuestLayout } from "../../lib/quests";
-import { QuestPreview, type QuestAction } from "./QuestPreview";
 
 // The quest graph canvas (spec 8): one custom node per quest, horizontal chain lanes,
 // prerequisite edges drawn from the required quest to the quest that needs it, and
@@ -17,22 +16,16 @@ type QuestNodeData = {
   hasIssues: boolean;
   selected: boolean;
   stat?: QuestStat;
-  live?: PlayerQuest;
-  preview: boolean;
-  canActAsServer: boolean;
-  busy: boolean;
   onEdit: () => void;
-  onAction: (quest: PlayerQuest, action: QuestAction) => void;
 };
 type LaneData = { label: string; width: number };
 type QuestNodeType = Node<QuestNodeData, "quest">;
 type LaneNodeType = Node<LaneData, "lane">;
 
 const QuestNode = memo(function QuestNode({ data }: NodeProps<QuestNodeType>) {
-  const { quest, live, preview } = data;
-  const status = preview && live ? `status-${live.status}` : "";
+  const { quest } = data;
   return (
-    <div className={`quest-node ${status} ${data.hasIssues ? "has-issues" : ""} ${data.selected ? "selected" : ""}`} style={{ width: NODE_WIDTH }}>
+    <div className={`quest-node ${data.hasIssues ? "has-issues" : ""} ${data.selected ? "selected" : ""}`} style={{ width: NODE_WIDTH }}>
       <Handle type="target" position={Position.Left} aria-label={`Prerequisites of ${quest.name}`} />
       {/* nodrag: the title is for selecting; drag the node by the rest of the card. */}
       <button type="button" className="quest-node-title nodrag" onClick={data.onEdit} aria-label={`Edit ${quest.name}`}>
@@ -48,7 +41,6 @@ const QuestNode = memo(function QuestNode({ data }: NodeProps<QuestNodeType>) {
         {quest.claimable_by === "server" && <span className="badge" title="Only the game server can claim"><Server size={11} /> server</span>}
       </div>
       {data.stat && <small className="quest-node-stats">{data.stat.accepted} accepted · {data.stat.completions_claimed} completed</small>}
-      {preview && <QuestPreview quest={live} canActAsServer={data.canActAsServer} busy={data.busy} onAction={data.onAction} />}
       <Handle type="source" position={Position.Right} aria-label={`Quests that require ${quest.name}`} />
     </div>
   );
@@ -60,22 +52,17 @@ function LaneNode({ data }: NodeProps<LaneNodeType>) {
 
 const nodeTypes = { quest: QuestNode, lane: LaneNode };
 
-export function QuestCanvas({ quests, layout, issueIndexes, selectedKey, stats, live, preview, canActAsServer, busy, onEdit, onMove, onConnect, onDisconnect, onAction, onRejectConnection }: {
+export function QuestCanvas({ quests, layout, issueIndexes, selectedKey, stats, onEdit, onMove, onConnect, onDisconnect, onRejectConnection }: {
   quests: QuestDefinition[];
   layout: QuestLayout;
   issueIndexes: Set<number>;
   selectedKey: string | null;
   stats: Map<string, QuestStat>;
-  live: Map<string, PlayerQuest>;
-  preview: boolean;
-  canActAsServer: boolean;
-  busy: boolean;
   onEdit: (index: number) => void;
   /** A node was dropped: its new position and the chain of the lane it landed in. */
   onMove: (key: string, position: XY, chain: string) => void;
   onConnect: (prerequisite: string, dependent: string) => void;
   onDisconnect: (prerequisite: string, dependent: string) => void;
-  onAction: (quest: PlayerQuest, action: QuestAction) => void;
   onRejectConnection: (message: string) => void;
 }) {
   const lanes = useMemo(() => lanesOf(quests), [quests]);
@@ -89,12 +76,12 @@ export function QuestCanvas({ quests, layout, issueIndexes, selectedKey, stats, 
     const questNodes: QuestNodeType[] = quests.map((quest, index) => ({
       id: quest.key, type: "quest", position: placed[quest.key], deletable: false,
       data: {
-        quest, hasIssues: issueIndexes.has(index), selected: quest.key === selectedKey, stat: stats.get(quest.key), live: live.get(quest.key),
-        preview, canActAsServer, busy, onEdit: () => onEdit(index), onAction,
+        quest, hasIssues: issueIndexes.has(index), selected: quest.key === selectedKey, stat: stats.get(quest.key),
+        onEdit: () => onEdit(index),
       },
     }));
     return [...laneNodes, ...questNodes];
-  }, [lanes, placed, quests, issueIndexes, selectedKey, stats, live, preview, canActAsServer, busy, onEdit, onAction]);
+  }, [lanes, placed, quests, issueIndexes, selectedKey, stats, onEdit]);
 
   // React Flow moves nodes locally while dragging; the saved draft resets them. Keep
   // each node's measured size when resetting: React Flow hides unmeasured nodes and

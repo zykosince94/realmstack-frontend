@@ -37,3 +37,6 @@ export type Balance = Schemas["Balance"];
 export type Transaction = Schemas["Transaction"];
 export type LeaderboardEntry = Schemas["LeaderboardEntry"];
 export type FieldError = Schemas["FieldError"];
+export type PlayerSummary = Schemas["PlayerSummary"];
+export type PlayerAdminProfile = Schemas["PlayerAdminProfile"];
+export type Progression = Schemas["Progression"];

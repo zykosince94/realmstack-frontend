@@ -166,40 +166,4 @@ describe("Quests", { timeout: 20_000 }, () => {
     expect(screen.getByRole("complementary", { name: "Quest editor" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /auto-arrange/i })).not.toBeInTheDocument();
   });
-
-  it("previews the player's quest log and accepts and claims quests", async () => {
-    let accepted = false;
-    const playerQuest = (key: string, name: string, status: string, extra = {}) => ({
-      key, name, description: "", chain: null, repeat: "none", auto_accept: false, claimable_by: "player", requires_quests: [], requires_achievements: [],
-      status, period_key: "", accepted_at: null, auto_accepted: false, current_stage: null, stages: [], rewards: {}, completion_claimed: false,
-      claimable: { stages: [], completion: false }, locked_by: { quests: [], achievements: [] }, available_from: null, available_until: null, resets_at: null, expires_at: null, ...extra,
-    });
-    const server = mockApi(questRoutes({
-      "GET /v1/players/me/quests": () => ({ body: [
-        playerQuest("awakening", "The Awakening", "completed", { claimable: { stages: [], completion: true } }),
-        playerQuest("mine", "Into the Mine", accepted ? "active" : "available", accepted ? { current_stage: 0, stages: [{ key: "enter", name: "Enter the mine", conditions: [], rewards: {}, progress: [], complete: false, claimed: false }] } : {}),
-        playerQuest("daily_hunt", "Daily Hunt", "locked", { locked_by: { quests: [], achievements: ["first_blood"] } }),
-      ] }),
-      "POST /v1/players/me/quests/mine/accept": () => { accepted = true; return { body: playerQuest("mine", "Into the Mine", "active") }; },
-      "POST /v1/players/me/quests/awakening/claim": { body: { key: "awakening", period_key: "", claimed_by: "player", claimed_at: "2026-11-16T00:00:00Z", paid: [], quest: playerQuest("awakening", "The Awakening", "claimed") } },
-    }));
-    const user = await signIn();
-    await openScreen(user, "Players");
-    await user.click(screen.getByRole("button", { name: "Register player" }));
-    await screen.findByText("Player registered and signed in.");
-    await openScreen(user, "Quests");
-    await user.click(await screen.findByRole("button", { name: /player preview/i }));
-
-    const mine = await screen.findByLabelText("Player view of mine");
-    expect(within(screen.getByLabelText("Player view of daily_hunt")).getByText("Needs first_blood")).toBeInTheDocument();
-    expect((screen.getByRole("button", { name: "Edit Daily Hunt" }).closest(".quest-node") as HTMLElement).className).toContain("status-locked");
-    await user.click(within(mine).getByRole("button", { name: "Accept" }));
-    await waitFor(() => expect(server.find("POST", "/v1/players/me/quests/mine/accept")).toHaveLength(1));
-    expect(server.find("POST", "/v1/players/me/quests/mine/accept")[0].headers["Idempotency-Key"]).toBeTruthy();
-    expect(await within(screen.getByLabelText("Player view of mine")).findByText("Stage 1/1: Enter the mine")).toBeInTheDocument();
-
-    await user.click(within(screen.getByLabelText("Player view of awakening")).getByRole("button", { name: "Claim" }));
-    await waitFor(() => expect(server.find("POST", "/v1/players/me/quests/awakening/claim")).toHaveLength(1));
-    expect(await screen.findByText("Claimed the earned rewards of The Awakening.")).toBeInTheDocument();
-  });
 });
