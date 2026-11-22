@@ -94,6 +94,27 @@ export function usePlayerActions(playerId: string) {
         await unwrap(client.POST("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/quests/{key}/claim", { ...base, params: { path: { ...path, key }, header: header() } }), token);
         return `Claimed the earned rewards of ${key}.`;
       }),
+      // Saves: the write sends the version that was read, so the admin never overwrites a
+      // save the game wrote in the meantime (the server answers 409 SAVE_VERSION_CONFLICT).
+      putSave: (slot: string, data: unknown, expectedVersion: number) => act(async () => {
+        const result = await unwrap(client.PUT("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/saves/{slot}", { ...base, params: { path: { ...path, slot }, header: header() }, body: { data, expected_version: expectedVersion } }), token);
+        return `Saved ${slot} (version ${result.version}).`;
+      }),
+      deleteSave: (slot: string, expectedVersion: number) => act(async () => {
+        await unwrap(client.DELETE("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/saves/{slot}", { ...base, params: { path: { ...path, slot }, query: { expected_version: expectedVersion }, header: header() } }), token);
+        return `Deleted the ${slot} save.`;
+      }),
+      // Bans are dashboard-only: they are not a game action, but they live here with the
+      // other player actions so every change to a player goes through one place.
+      banPlayer: (reason: string, expiresAt: string | null) => act(async () => {
+        const result = await unwrap(client.POST("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/ban", { ...base, params: { path, header: header() }, body: { reason, expires_at: expiresAt } }), token);
+        const until = result.ban.expires_at ? `until ${new Date(result.ban.expires_at).toLocaleString()}` : "permanently";
+        return `Banned ${until}; ${result.sessions_revoked} session(s) signed out.`;
+      }),
+      liftBan: (note: string) => act(async () => {
+        await unwrap(client.POST("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/ban/lift", { ...base, params: { path, header: header() }, body: { note: note.trim() } }), token);
+        return "Lifted the ban. The player can sign in again.";
+      }),
     };
   }, [token, projectId, envId, playerId, run, notify, queryClient]);
 }

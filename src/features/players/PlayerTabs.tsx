@@ -1,10 +1,11 @@
 import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
-import type { PlayerQuest } from "../../api/types";
+import type { PlayerBan, PlayerBanRecord, PlayerQuest, SaveSummary } from "../../api/types";
 import { useWorkspace } from "../../app/workspace";
+import { FieldIssue } from "../../components/ui";
 import {
-  useAdminPlayerAchievements, useAdminPlayerCurrency, useAdminPlayerInventory, useAdminPlayerLedger, useAdminPlayerProgression,
-  useAdminPlayerQuests, useAdminPlayerStats, usePublished,
+  useAdminPlayerAchievements, useAdminPlayerBans, useAdminPlayerCurrency, useAdminPlayerInventory, useAdminPlayerLedger, useAdminPlayerProgression,
+  useAdminPlayerQuests, useAdminPlayerSave, useAdminPlayerSaves, useAdminPlayerStats, usePublished,
 } from "../../hooks/queries";
 import { usePlayerActions } from "../../hooks/playerActions";
 import { itemSlot, keysOf, pickKey } from "../../lib/config";
@@ -218,6 +219,154 @@ export function AchievementsTab({ playerId }: { playerId: string }) {
         </tr>
       ))}</tbody>
     </table></div>
+  );
+}
+
+const kib = (bytes: number) => (bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KiB`);
+
+/**
+ * Cloud saves: the player's slots, and the JSON in one of them. Editing sends the version
+ * that was loaded, so a save the game wrote meanwhile is never overwritten silently.
+ */
+export function SavesTab({ playerId }: { playerId: string }) {
+  const w = useWorkspace();
+  const q = useAdminPlayerSaves(playerId, true);
+  const act = usePlayerActions(playerId);
+  const [open, setOpen] = useState<string | null>(null);
+  if (q.isPending) return <p className="empty-text">Loading…</p>;
+  if (!q.data) return <p className="empty-text">Saves could not be loaded.</p>;
+  const slots = q.data.data;
+  const opened = slots.find((s) => s.slot === open);
+  function remove(slot: SaveSummary) {
+    if (!window.confirm(`Delete the ${slot.slot} save? The player loses this progress; it cannot be undone.`)) return;
+    if (open === slot.slot) setOpen(null);
+    void act.deleteSave(slot.slot, slot.version);
+  }
+  return (
+    <>
+      <p className="tab-summary">{slots.length} of {q.data.meta.max_slots} slots used · at most {kib(q.data.meta.max_bytes)} each. The game writes saves; edit one here only to repair it.</p>
+      {slots.length === 0 ? <p className="empty-text">The player has no cloud saves.</p> : (
+        <div className="table-wrap"><table aria-label="Saves">
+          <thead><tr><th>Slot</th><th>Version</th><th>Size</th><th>Updated</th><th><span className="sr-only">Actions</span></th></tr></thead>
+          <tbody>{slots.map((s) => (
+            <tr key={s.slot}>
+              <td><code>{s.slot}</code></td><td>{s.version}</td><td>{kib(s.size_bytes)}</td><td>{dateTime(s.updated_at)}</td>
+              <td className="row-actions">
+                <button className="button secondary small" aria-label={`${open === s.slot ? "Close" : "Open"} ${s.slot}`} onClick={() => setOpen(open === s.slot ? null : s.slot)}>{open === s.slot ? "Close" : "Open"}</button>
+                <button className="button secondary small" disabled={w.busy} aria-label={`Delete ${s.slot}`} onClick={() => remove(s)}>Delete</button>
+              </td>
+            </tr>
+          ))}</tbody>
+        </table></div>
+      )}
+      {/* Keyed by version: after a write the list refetches, the key changes and the editor reloads. */}
+      {opened && <SaveEditor key={`${opened.slot}:${opened.version}`} playerId={playerId} slot={opened.slot} />}
+    </>
+  );
+}
+
+function SaveEditor({ playerId, slot }: { playerId: string; slot: string }) {
+  const w = useWorkspace();
+  const save = useAdminPlayerSave(playerId, slot);
+  const act = usePlayerActions(playerId);
+  const [text, setText] = useState<string | null>(null); // null until edited: show what was loaded
+  const [issue, setIssue] = useState<string>();
+  const loaded = save.data;
+  const shown = text ?? (loaded ? JSON.stringify(loaded.data, null, 2) : "");
+  function submit() {
+    if (!loaded) return;
+    let data: unknown;
+    try {
+      data = JSON.parse(shown);
+    } catch {
+      setIssue("This is not valid JSON.");
+      return;
+    }
+    if (data === null) {
+      setIssue("A save cannot be null; delete the slot instead.");
+      return;
+    }
+    setIssue(undefined);
+    void act.putSave(slot, data, loaded.version);
+  }
+  return (
+    <ActionForm label={`Save ${slot}`} onSubmit={submit}>
+      {save.isPending ? <p className="empty-text">Loading the save…</p> : !loaded ? <p className="empty-text">This save could not be loaded.</p> : <>
+        <label className="save-editor">Data (version {loaded.version})
+          <textarea value={shown} rows={12} spellCheck={false} onChange={(event) => setText(event.target.value)}
+            aria-invalid={issue ? true : undefined} aria-describedby={issue ? "save-issue" : undefined} />
+          <FieldIssue id="save-issue" message={issue} />
+        </label>
+        <button className="button primary" disabled={w.busy || text === null}>Save changes</button>
+        <small>Saving checks that the game has not written a newer version.</small>
+      </>}
+    </ActionForm>
+  );
+}
+
+const banDurations = [
+  { id: "1h", label: "1 hour", hours: 1 },
+  { id: "24h", label: "24 hours", hours: 24 },
+  { id: "7d", label: "7 days", hours: 24 * 7 },
+  { id: "30d", label: "30 days", hours: 24 * 30 },
+  { id: "permanent", label: "Permanent", hours: 0 },
+] as const;
+
+/**
+ * Moderation: ban or unban the player and see their ban history. A ban signs the player
+ * out everywhere and refuses their sign-in and tokens; the game server and this dashboard
+ * can still act on them.
+ */
+export function ModerationTab({ playerId, ban }: { playerId: string; ban: PlayerBan | null }) {
+  const w = useWorkspace();
+  const history = useAdminPlayerBans(playerId, true);
+  const act = usePlayerActions(playerId);
+  const [reason, setReason] = useState("");
+  const [duration, setDuration] = useState<string>("24h");
+  const [note, setNote] = useState("");
+
+  function banNow() {
+    const hours = banDurations.find((d) => d.id === duration)?.hours ?? 0;
+    const expiresAt = hours > 0 ? new Date(Date.now() + hours * 3_600_000).toISOString() : null;
+    const what = expiresAt ? `until ${dateTime(expiresAt)}` : "permanently";
+    const verb = ban ? "Replace the current ban and ban this player" : "Ban this player";
+    if (!window.confirm(`${verb} ${what}? They are signed out everywhere and cannot sign in or use the game until the ban ends. They will see the reason.`)) return;
+    void act.banPlayer(reason.trim(), expiresAt);
+  }
+  function lift() {
+    if (!window.confirm("Lift this player's ban? They can sign in again.")) return;
+    void act.liftBan(note);
+  }
+  const rows = history.data ?? [];
+  return (
+    <>
+      {ban && (
+        <ActionForm label="Lift the ban" onSubmit={lift}>
+          <label>Note<input value={note} maxLength={500} onChange={(event) => setNote(event.target.value)} placeholder="Optional, kept in the history" /></label>
+          <button className="button primary" disabled={w.busy}>Lift ban</button>
+        </ActionForm>
+      )}
+      <ActionForm label={ban ? "Replace the ban" : "Ban this player"} onSubmit={banNow}>
+        <label>Reason<input value={reason} maxLength={500} required onChange={(event) => setReason(event.target.value)} placeholder="Shown to the player" /></label>
+        <label>Duration<select value={duration} onChange={(event) => setDuration(event.target.value)}>{banDurations.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}</select></label>
+        <button className="button secondary" disabled={w.busy || reason.trim() === ""}>{ban ? "Replace ban" : "Ban player"}</button>
+        <small>Existing leaderboard scores stay on the boards.</small>
+      </ActionForm>
+      {history.isPending ? <p className="empty-text">Loading…</p> : rows.length === 0 ? <p className="empty-text">This player has never been banned.</p> : (
+        <div className="table-wrap"><table aria-label="Ban history">
+          <thead><tr><th>Banned</th><th>Reason</th><th>Until</th><th>Status</th><th>Ended</th></tr></thead>
+          <tbody>{rows.map((b: PlayerBanRecord) => (
+            <tr key={b.id}>
+              <td>{dateTime(b.created_at)}<small className="cell-note">{b.created_by}</small></td>
+              <td>{b.reason}</td>
+              <td>{b.expires_at ? dateTime(b.expires_at) : "Permanent"}</td>
+              <td><span className={`status-pill ban-${b.status}`}>{b.status}</span></td>
+              <td>{b.ended_at ? <>{dateTime(b.ended_at)}{b.end_note && <small className="cell-note">{b.end_note}</small>}</> : "–"}</td>
+            </tr>
+          ))}</tbody>
+        </table></div>
+      )}
+    </>
   );
 }
 

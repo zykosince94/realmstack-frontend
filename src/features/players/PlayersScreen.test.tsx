@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { apiError, mockApi, type Handler } from "../../test/mockApi";
 import { base, liveConfig, openScreen, routes, signIn } from "../../test/fixtures";
 
-const summary = (n: number) => ({ id: `00000000-0000-0000-0000-00000000000${n}`, display_name: `Player ${n}`, email: `p${n}@example.test`, external_player_key: null, created_at: "2026-11-10T10:00:00Z", total_xp: n * 100, level: n });
+const summary = (n: number) => ({ id: `00000000-0000-0000-0000-00000000000${n}`, display_name: `Player ${n}`, email: `p${n}@example.test`, external_player_key: null, created_at: "2026-11-10T10:00:00Z", total_xp: n * 100, level: n, banned: false });
 const ana = { ...summary(1), display_name: "Ana Stormblade", email: "ana@example.test" };
 const player = `${base}/players/${ana.id}`;
 
@@ -16,7 +16,7 @@ function playerRoutes(extra: Record<string, Handler> = {}) {
         ? { body: [summary(3)] }
         : { body: [ana, summary(2)], meta: { next_cursor: "page-2" } };
     },
-    [`GET ${player}`]: { body: { ...ana, metadata: { platform: "steam" }, last_session_at: "2026-11-17T09:00:00Z", active_sessions: 2 } },
+    [`GET ${player}`]: { body: { ...ana, metadata: { platform: "steam" }, last_session_at: "2026-11-17T09:00:00Z", active_sessions: 2, ban: null } },
     [`GET ${player}/progression`]: { body: { total_xp: 120, level: 2, version: 1, thresholds: [100, 300, 700] } },
     [`GET ${player}/currency`]: { body: [{ currency_key: "credits", name: "Credits", balance: 4200 }, { currency_key: "gems", name: "Gems", balance: 15 }] },
     [`GET ${player}/inventory`]: { body: [{ item_key: "iron_sword", name: "Iron Sword", category: "weapon", quantity: 1, metadata: { slot: "weapon" }, equipped_slot: "weapon" }] },
@@ -78,6 +78,19 @@ describe("Players", () => {
     const ledger = await within(detail).findByRole("table", { name: "Economy history" });
     expect(ledger).toHaveTextContent("first_blood");
     expect(ledger).toHaveTextContent("claim");
+  });
+
+  it("marks banned players and can list only them", async () => {
+    const server = mockApi(playerRoutes({
+      [`GET ${base}/players`]: (r) => ({ body: r.query.get("banned") === "true" ? [{ ...ana, banned: true }] : [{ ...ana, banned: true }, summary(2)] }),
+    }));
+    const user = await openPlayers();
+    const list = await screen.findByRole("list", { name: "Players" });
+    expect(within(list).getByRole("button", { name: /Ana Stormblade/ })).toHaveTextContent("Banned");
+    expect(within(list).getByRole("button", { name: /Player 2/ })).not.toHaveTextContent("Banned");
+    await user.click(screen.getByLabelText("Banned players only"));
+    await waitFor(() => expect(within(screen.getByRole("list", { name: "Players" })).queryByText("Player 2")).not.toBeInTheDocument());
+    expect(server.find("GET", `${base}/players`).some((r) => r.query.get("banned") === "true")).toBe(true);
   });
 
   it("says so when the environment has no players", async () => {
@@ -268,6 +281,124 @@ describe("Players: management actions", () => {
     await user.click(within(detail).getByRole("button", { name: "Claim finished" }));
     await waitFor(() => expect(server.find("POST", `${player}/quests/finished/claim`)).toHaveLength(1));
     expect(await screen.findByText("Claimed the earned rewards of finished.")).toBeInTheDocument();
+  });
+
+  it("edits a save with the version it loaded, refuses invalid JSON and deletes after confirmation", async () => {
+    const slot = { slot: "slot1", version: 3, size_bytes: 40, created_at: "2026-11-10T10:00:00Z", updated_at: "2026-11-17T10:00:00Z" };
+    const { server, user, detail } = await openPlayer({
+      [`GET ${player}/saves`]: { body: [slot], meta: { max_slots: 10, max_bytes: 262144 } },
+      [`GET ${player}/saves/slot1`]: { body: { ...slot, data: { level: 5, gold: 120 } } },
+      [`PUT ${player}/saves/slot1`]: { body: { ...slot, version: 4 } },
+      [`DELETE ${player}/saves/slot1`]: { body: { slot: "slot1", deleted: true, version: 3 } },
+    });
+    await user.click(within(detail).getByRole("tab", { name: /Saves/ }));
+    expect(await within(detail).findByText(/1 of 10 slots used/)).toBeInTheDocument();
+    expect(within(detail).getByRole("table", { name: "Saves" })).toHaveTextContent("slot1");
+
+    await user.click(within(detail).getByRole("button", { name: "Open slot1" }));
+    const editor = await within(detail).findByRole("form", { name: "Save slot1" });
+    const data = await within(editor).findByLabelText(/^Data \(version 3\)/);
+    expect(data).toHaveValue(JSON.stringify({ level: 5, gold: 120 }, null, 2));
+    // Nothing to save until it is edited.
+    expect(within(editor).getByRole("button", { name: "Save changes" })).toBeDisabled();
+
+    await user.clear(data);
+    await user.click(data);
+    await user.paste("not json");
+    await user.click(within(editor).getByRole("button", { name: "Save changes" }));
+    expect(await within(editor).findByText("This is not valid JSON.")).toBeInTheDocument();
+    expect(data).toHaveAttribute("aria-invalid", "true");
+    expect(server.find("PUT", `${player}/saves/slot1`)).toHaveLength(0);
+
+    await user.clear(data);
+    await user.paste('{"level": 6}');
+    await user.click(within(editor).getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(server.find("PUT", `${player}/saves/slot1`)).toHaveLength(1));
+    const put = server.find("PUT", `${player}/saves/slot1`)[0];
+    expect(put.body).toEqual({ data: { level: 6 }, expected_version: 3 });
+    expect(put.headers["Idempotency-Key"]).toBeTruthy();
+    expect(await screen.findByText("Saved slot1 (version 4).")).toBeInTheDocument();
+
+    const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false);
+    await user.click(within(detail).getByRole("button", { name: "Delete slot1" }));
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("slot1"));
+    expect(server.find("DELETE", `${player}/saves/slot1`)).toHaveLength(0);
+    confirm.mockReturnValueOnce(true);
+    await user.click(within(detail).getByRole("button", { name: "Delete slot1" }));
+    await waitFor(() => expect(server.find("DELETE", `${player}/saves/slot1`)).toHaveLength(1));
+    expect(server.find("DELETE", `${player}/saves/slot1`)[0].query.get("expected_version")).toBe("3");
+  });
+
+  it("says so when the player has no saves", async () => {
+    const { user, detail } = await openPlayer({ [`GET ${player}/saves`]: { body: [], meta: { max_slots: 10, max_bytes: 262144 } } });
+    await user.click(within(detail).getByRole("tab", { name: /Saves/ }));
+    expect(await within(detail).findByText("The player has no cloud saves.")).toBeInTheDocument();
+  });
+
+  it("bans a player only after confirmation, permanently or for a while", async () => {
+    const record = { id: "b1", reason: "Cheating", expires_at: null, created_at: "2026-11-22T10:00:00Z", created_by: "admin@realmstack.local", ended_at: null, ended_by: null, end_kind: null, end_note: "", status: "active" };
+    const { server, user, detail } = await openPlayer({
+      [`GET ${player}/bans`]: { body: [] },
+      [`POST ${player}/ban`]: { status: 201, body: { ban: record, sessions_revoked: 2 } },
+    });
+    await user.click(within(detail).getByRole("tab", { name: /Moderation/ }));
+    expect(await within(detail).findByText("This player has never been banned.")).toBeInTheDocument();
+    const form = within(detail).getByRole("form", { name: "Ban this player" });
+    // A reason is required: the player sees it.
+    expect(within(form).getByRole("button", { name: "Ban player" })).toBeDisabled();
+    await user.type(within(form).getByLabelText("Reason"), "Cheating");
+    await user.selectOptions(within(form).getByLabelText("Duration"), "Permanent");
+
+    const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false);
+    await user.click(within(form).getByRole("button", { name: "Ban player" }));
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining("permanently"));
+    expect(server.find("POST", `${player}/ban`)).toHaveLength(0);
+    confirm.mockReturnValueOnce(true);
+    await user.click(within(form).getByRole("button", { name: "Ban player" }));
+    await waitFor(() => expect(server.find("POST", `${player}/ban`)).toHaveLength(1));
+    expect(only(server, "/ban").body).toEqual({ reason: "Cheating", expires_at: null });
+    expect(await screen.findByText("Banned permanently; 2 session(s) signed out.")).toBeInTheDocument();
+
+    // A timed ban sends an expiry that far in the future.
+    await user.selectOptions(within(form).getByLabelText("Duration"), "24 hours");
+    confirm.mockReturnValueOnce(true);
+    const before = Date.now();
+    await user.click(within(form).getByRole("button", { name: "Ban player" }));
+    await waitFor(() => expect(server.find("POST", `${player}/ban`)).toHaveLength(2));
+    const expires = Date.parse((server.find("POST", `${player}/ban`)[1].body as { expires_at: string }).expires_at);
+    expect(expires - before).toBeGreaterThanOrEqual(24 * 3_600_000 - 1000);
+    expect(expires - before).toBeLessThan(24 * 3_600_000 + 60_000);
+  });
+
+  it("shows a ban in force with its history, and lifts it after confirmation", async () => {
+    const ban = { id: "b2", reason: "Botting in ranked", expires_at: "2026-12-01T00:00:00Z", created_at: "2026-11-22T10:00:00Z" };
+    const { server, user, detail } = await openPlayer({
+      [`GET ${player}`]: { body: { ...ana, metadata: {}, last_session_at: null, active_sessions: 0, ban } },
+      [`GET ${player}/bans`]: { body: [
+        { ...ban, created_by: "admin@realmstack.local", ended_at: null, ended_by: null, end_kind: null, end_note: "", status: "active" },
+        { id: "b1", reason: "Spam", expires_at: "2026-11-02T00:00:00Z", created_at: "2026-11-01T00:00:00Z", created_by: "admin@realmstack.local", ended_at: "2026-11-01T12:00:00Z", ended_by: "admin@realmstack.local", end_kind: "lifted", end_note: "Appeal accepted", status: "lifted" },
+      ] },
+      [`POST ${player}/ban/lift`]: { body: { ban: { ...ban, status: "lifted" } } },
+    });
+    expect(within(detail).getByRole("status")).toHaveTextContent("Banned until");
+    expect(within(detail).getByRole("status")).toHaveTextContent("Botting in ranked");
+
+    await user.click(within(detail).getByRole("tab", { name: /Moderation/ }));
+    const history = await within(detail).findByRole("table", { name: "Ban history" });
+    expect(history).toHaveTextContent("Appeal accepted");
+    expect(history).toHaveTextContent("lifted");
+    expect(within(detail).getByRole("form", { name: "Replace the ban" })).toBeInTheDocument();
+
+    const lift = within(detail).getByRole("form", { name: "Lift the ban" });
+    await user.type(within(lift).getByLabelText("Note"), "Appeal accepted");
+    const confirm = vi.spyOn(window, "confirm").mockReturnValueOnce(false);
+    await user.click(within(lift).getByRole("button", { name: "Lift ban" }));
+    expect(server.find("POST", `${player}/ban/lift`)).toHaveLength(0);
+    confirm.mockReturnValueOnce(true);
+    await user.click(within(lift).getByRole("button", { name: "Lift ban" }));
+    await waitFor(() => expect(server.find("POST", `${player}/ban/lift`)).toHaveLength(1));
+    expect(only(server, "/ban/lift").body).toEqual({ note: "Appeal accepted" });
+    expect(await screen.findByText("Lifted the ban. The player can sign in again.")).toBeInTheDocument();
   });
 
   it("offers nothing to act on until a configuration is published", async () => {

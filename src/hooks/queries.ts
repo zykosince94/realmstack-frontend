@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
-import { authHeaders, client, unwrap, unwrapPage } from "../api/client";
+import { authHeaders, client, unwrap, unwrapPage, unwrapWithMeta } from "../api/client";
 import { useWorkspace } from "../app/workspace";
 
 /**
@@ -20,7 +20,7 @@ export const keys = {
   versions: (projectId: string, envId: string) => ["scope", projectId, envId, "versions"] as const,
   aiGenerations: (projectId: string, envId: string) => ["scope", projectId, envId, "ai-generations"] as const,
   aiGeneration: (projectId: string, envId: string, id: string) => ["scope", projectId, envId, "ai-generations", id] as const,
-  adminPlayers: (projectId: string, envId: string, search: string) => ["scope", projectId, envId, "players", "list", search] as const,
+  adminPlayers: (projectId: string, envId: string, search: string, bannedOnly: boolean) => ["scope", projectId, envId, "players", "list", search, bannedOnly] as const,
   adminPlayer: (projectId: string, envId: string, playerId: string, part: string) => ["scope", projectId, envId, "players", playerId, part] as const,
   // AI settings belong to the dashboard user, not to a project or environment.
   aiSettings: (token: string) => ["ai-settings", token] as const,
@@ -163,14 +163,14 @@ export function useInvalidate() {
 
 // --- Players (the admin views of the environment's players; actions are in playerActions.ts) ---
 
-/** The environment's players, newest first; search matches name, email, external key or ID. */
-export function usePlayerDirectory(search: string) {
+/** The environment's players, newest first; search matches name, email, external key or ID. bannedOnly lists players with a ban in force. */
+export function usePlayerDirectory(search: string, bannedOnly = false) {
   const { token, path, projectId, envId } = useScopeParams();
   const query = useInfiniteQuery({
-    queryKey: keys.adminPlayers(projectId, envId, search),
+    queryKey: keys.adminPlayers(projectId, envId, search, bannedOnly),
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) => unwrapPage(client.GET("/v1/projects/{projectId}/environments/{envId}/players", {
-      params: { path, query: { limit: 25, ...(search ? { search } : {}), ...(pageParam ? { cursor: pageParam } : {}) } }, headers: authHeaders({ token }),
+      params: { path, query: { limit: 25, ...(search ? { search } : {}), ...(bannedOnly ? { banned: true } : {}), ...(pageParam ? { cursor: pageParam } : {}) } }, headers: authHeaders({ token }),
     }), token),
     getNextPageParam: (last) => last.nextCursor,
   });
@@ -243,6 +243,35 @@ export function useAdminPlayerQuests(playerId: string, enabled: boolean) {
     queryKey: keys.adminPlayer(projectId, envId, playerId, "quests"),
     enabled,
     queryFn: () => unwrap(client.GET("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/quests", { params: { path: playerPath }, headers: authHeaders({ token }) }), token),
+  });
+}
+
+/** The player's ban history, newest first. */
+export function useAdminPlayerBans(playerId: string, enabled: boolean) {
+  const { token, playerPath, projectId, envId } = usePlayerScope(playerId);
+  return useQuery({
+    queryKey: keys.adminPlayer(projectId, envId, playerId, "bans"),
+    enabled,
+    queryFn: () => unwrap(client.GET("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/bans", { params: { path: playerPath }, headers: authHeaders({ token }) }), token),
+  });
+}
+
+/** The player's save slots (no data) and the limits the server enforces. */
+export function useAdminPlayerSaves(playerId: string, enabled: boolean) {
+  const { token, playerPath, projectId, envId } = usePlayerScope(playerId);
+  return useQuery({
+    queryKey: keys.adminPlayer(projectId, envId, playerId, "saves"),
+    enabled,
+    queryFn: () => unwrapWithMeta(client.GET("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/saves", { params: { path: playerPath }, headers: authHeaders({ token }) }), token),
+  });
+}
+
+/** One save slot with its data. Its key sits under the slot list, so a write refreshes both. */
+export function useAdminPlayerSave(playerId: string, slot: string) {
+  const { token, playerPath, projectId, envId } = usePlayerScope(playerId);
+  return useQuery({
+    queryKey: [...keys.adminPlayer(projectId, envId, playerId, "saves"), slot],
+    queryFn: () => unwrap(client.GET("/v1/projects/{projectId}/environments/{envId}/players/{playerId}/saves/{slot}", { params: { path: { ...playerPath, slot } }, headers: authHeaders({ token }) }), token),
   });
 }
 

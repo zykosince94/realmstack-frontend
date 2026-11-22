@@ -46,6 +46,14 @@ export function idempotencyKey(): string {
   return crypto.randomUUID();
 }
 
+/** Like unwrap, for a response whose meta carries more than the request ID (the save limits, for example). */
+export async function unwrapWithMeta<T, M>(call: Promise<{ data?: { data: T; meta: M }; error?: unknown; response: Response }>, token?: string): Promise<{ data: T; meta: M }> {
+  const result = await call;
+  if (!result.response.ok || result.error !== undefined) throw toApiError(result.error, result.response.status, token);
+  if (!result.data) throw toApiError("", result.response.status, token);
+  return { data: result.data.data, meta: result.data.meta };
+}
+
 /** Like unwrap, for a cursor-paginated list: the page's rows and the cursor for the next one. */
 export async function unwrapPage<T>(call: Promise<Envelope<T>>, token?: string): Promise<{ rows: T; nextCursor?: string }> {
   const result = await call;

@@ -875,6 +875,93 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/saves": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the player's save slots (no data), by name; meta carries max_slots and max_bytes. */
+        get: operations["getProjectPlayerSaves"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/saves/{slot}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read one of the player's save slots with its data. */
+        get: operations["getProjectPlayerSave"];
+        /** Create (201) or replace (200) one of the player's save slots. Send expected_version (0 to create) to refuse overwriting a newer save (409 SAVE_VERSION_CONFLICT with details.current_version); omit it for last-write-wins. 422 SAVE_TOO_LARGE or SAVE_SLOT_LIMIT. */
+        put: operations["putProjectPlayerSave"];
+        post?: never;
+        /** Delete one of the player's save slots. */
+        delete: operations["deleteProjectPlayerSave"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/bans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The player's ban history, newest first (at most 100). */
+        get: operations["getProjectPlayerBans"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/ban": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ban the player until expires_at (omit for permanent). A banned player cannot sign in, refresh or use a player token (403 PLAYER_BANNED); every refresh token is revoked. Banning a banned player replaces the ban. The game server and the dashboard can still act on the player. */
+        post: operations["postProjectPlayerBan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/projects/{projectId}/environments/{envId}/players/{playerId}/ban/lift": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Lift the player's ban (422 NOT_BANNED if none is in force). Revoked sessions stay revoked; the player signs in again. */
+        post: operations["postProjectPlayerBanLift"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/players/register": {
         parameters: {
             query?: never;
@@ -901,7 +988,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Sign a player in (rate limited). */
+        /** Sign a player in (rate limited). A banned player gets 403 PLAYER_BANNED (details: reason, expires_at), only after a correct password. */
         post: operations["postPlayersLogin"];
         delete?: never;
         options?: never;
@@ -918,7 +1005,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Rotate a refresh token; reusing a rotated token revokes its family. */
+        /** Rotate a refresh token; reusing a rotated token revokes its family. A banned player gets 403 PLAYER_BANNED. */
         post: operations["postPlayersRefresh"];
         delete?: never;
         options?: never;
@@ -1148,6 +1235,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/players/me/saves": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List your save slots (no data), by name; meta carries max_slots and max_bytes. */
+        get: operations["getPlayersMeSaves"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/players/me/saves/{slot}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read one of your save slots with its data. */
+        get: operations["getPlayersMeSavesBySlot"];
+        /** Create (201) or replace (200) one of your save slots. Send expected_version (0 to create) to refuse overwriting a newer save (409 SAVE_VERSION_CONFLICT with details.current_version); omit it for last-write-wins. 422 SAVE_TOO_LARGE or SAVE_SLOT_LIMIT. */
+        put: operations["putPlayersMeSavesBySlot"];
+        post?: never;
+        /** Delete one of your save slots. */
+        delete: operations["deletePlayersMeSavesBySlot"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/server/players/{playerId}/items/grant": {
         parameters: {
             query?: never;
@@ -1279,6 +1402,42 @@ export interface paths {
         /** Claim any completed achievement on the player's behalf. */
         post: operations["postServerPlayersByPlayeridAchievementsByKeyClaim"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/server/players/{playerId}/saves": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a player's save slots (no data), by name; meta carries max_slots and max_bytes. */
+        get: operations["getServerPlayersByPlayeridSaves"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/server/players/{playerId}/saves/{slot}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read one of a player's save slots with its data. */
+        get: operations["getServerPlayersByPlayeridSavesBySlot"];
+        /** Create (201) or replace (200) one of a player's save slots. Send expected_version (0 to create) to refuse overwriting a newer save (409 SAVE_VERSION_CONFLICT with details.current_version); omit it for last-write-wins. 422 SAVE_TOO_LARGE or SAVE_SLOT_LIMIT. */
+        put: operations["putServerPlayersByPlayeridSavesBySlot"];
+        post?: never;
+        /** Delete one of a player's save slots. */
+        delete: operations["deleteServerPlayersByPlayeridSavesBySlot"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1951,6 +2110,8 @@ export interface components {
             /** Format: int64 */
             total_xp: number;
             level: number;
+            /** @description A ban is in force. */
+            banned: boolean;
         };
         PlayerAdminProfile: {
             /** Format: uuid */
@@ -1970,6 +2131,8 @@ export interface components {
             last_session_at: string | null;
             /** @description Refresh tokens that are neither revoked nor expired. */
             active_sessions: number;
+            /** @description The ban in force, or null. */
+            ban: components["schemas"]["PlayerBan"] | null;
         };
         UserSession: {
             user: {
@@ -2435,6 +2598,106 @@ export interface components {
             claimed_by_player: number;
             /** Format: int64 */
             claimed_by_server: number;
+        };
+        SavesMeta: {
+            request_id: string;
+            /** @description How many save slots a player may have. */
+            max_slots: number;
+            /** @description The largest save, measured as compacted JSON. */
+            max_bytes: number;
+        };
+        SaveSummary: {
+            slot: string;
+            /**
+             * Format: int64
+             * @description Starts at 1 and goes up by one on every write.
+             */
+            version: number;
+            /** @description Size of the compacted JSON. */
+            size_bytes: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        Save: components["schemas"]["SaveSummary"] & {
+            /** @description The saved JSON value, as written (key order may differ). */
+            data: unknown;
+        };
+        SaveWrite: {
+            /** @description Any JSON value except null; at most max_bytes when compacted. */
+            data: unknown;
+            /**
+             * Format: int64
+             * @description The version last read (0 = the slot must not exist yet). Omit for last-write-wins.
+             */
+            expected_version?: number;
+        };
+        SaveDeleted: {
+            slot: string;
+            deleted: boolean;
+            /**
+             * Format: int64
+             * @description The version that was deleted.
+             */
+            version: number;
+        };
+        /** @description A ban in force. The reason is shown to the player. */
+        PlayerBan: {
+            /** Format: uuid */
+            id: string;
+            reason: string;
+            /**
+             * Format: date-time
+             * @description Null for a permanent ban.
+             */
+            expires_at: string | null;
+            /** Format: date-time */
+            created_at: string;
+        };
+        PlayerBanRecord: {
+            /** Format: uuid */
+            id: string;
+            reason: string;
+            /** Format: date-time */
+            expires_at: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** @description Email of the dashboard user who issued the ban. */
+            created_by: string;
+            /** Format: date-time */
+            ended_at: string | null;
+            /** @description Email of the dashboard user who lifted or replaced the ban. */
+            ended_by: string | null;
+            /** @enum {string|null} */
+            end_kind: "lifted" | "replaced" | null;
+            end_note: string;
+            /** @enum {string} */
+            status: "active" | "expired" | "lifted" | "replaced";
+        };
+        BanRequest: {
+            /** @description Shown to the player in the 403 PLAYER_BANNED response. */
+            reason: string;
+            /**
+             * Format: date-time
+             * @description When the ban ends; must be in the future. Omit or null for a permanent ban.
+             */
+            expires_at?: string | null;
+        };
+        BanResult: {
+            ban: components["schemas"]["PlayerBanRecord"];
+            /**
+             * Format: int64
+             * @description Refresh tokens revoked by this ban.
+             */
+            sessions_revoked: number;
+        };
+        BanLiftRequest: {
+            /** @description Optional, kept in the ban history. */
+            note?: string;
+        };
+        BanLiftResult: {
+            ban: components["schemas"]["PlayerBanRecord"];
         };
     };
     responses: {
@@ -4103,6 +4366,8 @@ export interface operations {
             query?: {
                 /** @description Part of a display name, email or external key (case-insensitive), or a whole player ID. */
                 search?: string;
+                /** @description true lists only players with a ban in force. */
+                banned?: boolean;
                 /** @description Page size. */
                 limit?: number;
                 /** @description meta.next_cursor from the previous page. */
@@ -4982,6 +5247,287 @@ export interface operations {
             422: components["responses"]["E422"];
         };
     };
+    getProjectPlayerSaves: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SaveSummary"][];
+                        meta: components["schemas"]["SavesMeta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    getProjectPlayerSave: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+                /** @description Save slot name: 1 to 63 lowercase letters, digits, - or _. */
+                slot: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Save"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    putProjectPlayerSave: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+                /** @description Save slot name: 1 to 63 lowercase letters, digits, - or _. */
+                slot: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveWrite"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SaveSummary"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SaveSummary"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    deleteProjectPlayerSave: {
+        parameters: {
+            query?: {
+                /** @description Delete only if the slot is still at this version (409 otherwise). */
+                expected_version?: number;
+            };
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+                /** @description Save slot name: 1 to 63 lowercase letters, digits, - or _. */
+                slot: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SaveDeleted"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    getProjectPlayerBans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlayerBanRecord"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    postProjectPlayerBan: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BanRequest"];
+            };
+        };
+        responses: {
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["BanResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    postProjectPlayerBanLift: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+                /** @description Player ID (must belong to this environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["BanLiftRequest"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["BanLiftResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
     postPlayersRegister: {
         parameters: {
             query?: never;
@@ -5040,6 +5586,7 @@ export interface operations {
             };
             400: components["responses"]["E400"];
             401: components["responses"]["E401"];
+            403: components["responses"]["E403"];
             422: components["responses"]["E422"];
             429: components["responses"]["E429"];
         };
@@ -5071,6 +5618,7 @@ export interface operations {
             };
             400: components["responses"]["E400"];
             401: components["responses"]["E401"];
+            403: components["responses"]["E403"];
             422: components["responses"]["E422"];
         };
     };
@@ -5492,6 +6040,149 @@ export interface operations {
             422: components["responses"]["E422"];
         };
     };
+    getPlayersMeSaves: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SaveSummary"][];
+                        meta: components["schemas"]["SavesMeta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            403: components["responses"]["E403"];
+        };
+    };
+    getPlayersMeSavesBySlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Save slot name: 1 to 63 lowercase letters, digits, - or _. */
+                slot: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Save"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            403: components["responses"]["E403"];
+            404: components["responses"]["E404"];
+        };
+    };
+    putPlayersMeSavesBySlot: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Save slot name: 1 to 63 lowercase letters, digits, - or _. */
+                slot: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveWrite"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SaveSummary"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SaveSummary"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            403: components["responses"]["E403"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    deletePlayersMeSavesBySlot: {
+        parameters: {
+            query?: {
+                /** @description Delete only if the slot is still at this version (409 otherwise). */
+                expected_version?: number;
+            };
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Save slot name: 1 to 63 lowercase letters, digits, - or _. */
+                slot: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SaveDeleted"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            403: components["responses"]["E403"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
     postServerPlayersByPlayeridItemsGrant: {
         parameters: {
             query?: never;
@@ -5767,6 +6458,155 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["ClaimResult"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    getServerPlayersByPlayeridSaves: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Player ID (must belong to the credential's environment). */
+                playerId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SaveSummary"][];
+                        meta: components["schemas"]["SavesMeta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    getServerPlayersByPlayeridSavesBySlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Player ID (must belong to the credential's environment). */
+                playerId: string;
+                /** @description Save slot name: 1 to 63 lowercase letters, digits, - or _. */
+                slot: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["Save"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    putServerPlayersByPlayeridSavesBySlot: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Player ID (must belong to the credential's environment). */
+                playerId: string;
+                /** @description Save slot name: 1 to 63 lowercase letters, digits, - or _. */
+                slot: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveWrite"];
+            };
+        };
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SaveSummary"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            /** @description Created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SaveSummary"];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            400: components["responses"]["E400"];
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+            409: components["responses"]["E409"];
+            422: components["responses"]["E422"];
+        };
+    };
+    deleteServerPlayersByPlayeridSavesBySlot: {
+        parameters: {
+            query?: {
+                /** @description Delete only if the slot is still at this version (409 otherwise). */
+                expected_version?: number;
+            };
+            header: {
+                /** @description Identifies one logical operation; reuse it only when retrying that operation. */
+                "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                /** @description Player ID (must belong to the credential's environment). */
+                playerId: string;
+                /** @description Save slot name: 1 to 63 lowercase letters, digits, - or _. */
+                slot: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SaveDeleted"];
                         meta: components["schemas"]["Meta"];
                     };
                 };
