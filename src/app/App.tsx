@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, Award, Boxes, Flag, FlaskConical, Gamepad2, Gauge, LogOut, Plus, ScrollText, ShieldCheck, Sparkles, Trophy, Users, Wallet } from "lucide-react";
+import { Activity, Award, Boxes, Flag, FlaskConical, Gamepad2, LayoutDashboard, LogOut, Plus, ScrollText, ShieldCheck, Sparkles, Trophy, Users, Wallet } from "lucide-react";
 import { authHeaders, client, unwrap } from "../api/client";
 import { describeError, isExpiredSession } from "../api/errors";
 import type { Environment, Project } from "../api/types";
@@ -9,7 +9,7 @@ import { keys } from "../hooks/queries";
 import { WorkspaceContext, type Notice, type ScreenId, type Workspace } from "./workspace";
 import { LoginScreen } from "../features/auth/LoginScreen";
 import { CreateProjectModal, ProjectsEmpty } from "../features/projects/Projects";
-import { Overview } from "../features/overview/Overview";
+import { Dashboard } from "../features/dashboard/Dashboard";
 import { PlayersScreen } from "../features/players/PlayersScreen";
 import { TestClient } from "../features/test-client/TestClient";
 import { Economy } from "../features/economy/Economy";
@@ -25,7 +25,7 @@ const QuestsScreen = lazy(() => import("../features/quests/QuestsScreen"));
 const AIAssistant = lazy(() => import("../features/ai-config/AIAssistant"));
 
 const screens = [
-  { id: "overview", label: "Overview", icon: Gauge, view: Overview },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, view: Dashboard },
   { id: "players", label: "Players", icon: Users, view: PlayersScreen },
   { id: "economy", label: "Inventory & economy", icon: Wallet, view: Economy },
   { id: "progression", label: "Progression", icon: Activity, view: Progression },
@@ -67,7 +67,7 @@ export function App() {
   const [restoring, setRestoring] = useState(true);
   const [projectId, setProjectId] = useState(saved.projectId ?? "");
   const [environmentId, setEnvironmentId] = useState(saved.environmentId ?? "");
-  const [screen, setScreenState] = useState<Screen>(isScreen(saved.screen) ? saved.screen : "overview");
+  const [screen, setScreenState] = useState<Screen>(isScreen(saved.screen) ? saved.screen : "dashboard");
   const [demoPlayerId, setDemoPlayerId] = useState("");
   const [demoPlayerToken, setDemoPlayerToken] = useState("");
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -120,7 +120,7 @@ export function App() {
     setEnvironmentId("");
     setDemoPlayerId("");
     setDemoPlayerToken("");
-    setScreen("overview");
+    setScreen("dashboard");
     queryClient.clear();
     setNotice(message ? { kind: "error", message } : null);
   }, [queryClient, setScreen]);

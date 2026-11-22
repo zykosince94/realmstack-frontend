@@ -2,8 +2,10 @@ import { Activity, Award, Boxes, Check, ChevronDown, Coins, Gamepad2, KeyRound, 
 import { useWorkspace } from "../../app/workspace";
 import { PageTitle } from "../../components/ui";
 import { useDraft, usePublished } from "../../hooks/queries";
+import { ActivityCharts } from "./ActivityCharts";
 
-export function Overview() {
+/** The landing screen (formerly Overview): player activity first, then the environment at a glance. */
+export function Dashboard() {
   const { project, environment } = useWorkspace();
   const draft = useDraft().data;
   const published = usePublished().data;
@@ -20,7 +22,8 @@ export function Overview() {
   const pid = environment.public_id;
   return (
     <>
-      <PageTitle eyebrow="REALMSTACK / OVERVIEW" title={project.name} description="Your game services at a glance. Changes in this environment are isolated from other environments." actions={<span className={`environment-badge ${environment.name}`}>{environment.name}<span className="status-dot" /></span>} />
+      <PageTitle eyebrow="REALMSTACK / DASHBOARD" title={project.name} description="Your players and game services at a glance. Changes in this environment are isolated from other environments." actions={<span className={`environment-badge ${environment.name}`}>{environment.name}<span className="status-dot" /></span>} />
+      <ActivityCharts />
       <div className="stat-grid">{stats.map(({ label, value, icon: Icon, tone, note }) => <div className="stat-card" key={label}><div className={`stat-icon ${tone}`}><Icon size={18} /></div><span className="stat-label">{label}</span><b>{value}</b><small>{note}</small></div>)}</div>
       <div className="overview-grid">
         <div className="panel recent-panel"><div className="panel-heading"><div><h3>Quick start</h3><p>Follow the happy path to try your game backend.</p></div><Rocket size={18} /></div>

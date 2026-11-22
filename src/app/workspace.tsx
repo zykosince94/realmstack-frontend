@@ -4,7 +4,7 @@ import type { Environment, Project } from "../api/types";
 export type Notice = { kind: "success" | "error"; message: string };
 
 /** The dashboard's screens (the sidebar order lives in App). */
-export type ScreenId = "overview" | "players" | "economy" | "progression" | "leaderboards" | "stats" | "achievements" | "quests" | "ai" | "client" | "settings";
+export type ScreenId = "dashboard" | "players" | "economy" | "progression" | "leaderboards" | "stats" | "achievements" | "quests" | "ai" | "client" | "settings";
 
 /**
  * Everything a feature screen needs from the shell: who is signed in, which project

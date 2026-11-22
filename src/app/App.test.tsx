@@ -7,14 +7,14 @@ import { renderApp } from "../test/render";
 
 
 describe("App", () => {
-  it("signs in and shows the overview with the live version", async () => {
+  it("signs in and shows the dashboard with the live version", async () => {
     mockApi(routes());
     await signIn();
     expect(await screen.findByText("Published v3")).toBeInTheDocument();
     expect(screen.queryByText(/not found/i)).not.toBeInTheDocument();
   });
 
-  it("shows no error on the overview for a project with nothing published", async () => {
+  it("shows no error on the dashboard for a project with nothing published", async () => {
     mockApi(routes({
       [`GET ${base}/configurations/draft`]: { body: { items: [], currencies: [], progression: [100], leaderboards: [] } },
       [`GET ${base}/configurations/published`]: { body: { version: null, config: null, published_at: null } },

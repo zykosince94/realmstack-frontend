@@ -501,6 +501,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/projects/{projectId}/environments/{envId}/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Concurrent players (15-minute buckets, last 24 h) and daily active players (UTC days, last 30 days), derived from when sessions were issued (login, registration, refresh). An approximation: see the backend README. */
+        get: operations["getProjectActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/projects/{projectId}/environments/{envId}/players/{playerId}": {
         parameters: {
             query?: never;
@@ -2699,6 +2716,41 @@ export interface components {
         BanLiftResult: {
             ban: components["schemas"]["PlayerBanRecord"];
         };
+        PlayerActivity: {
+            /** Format: date-time */
+            generated_at: string;
+            /** @description Width of a CCU bucket (15). */
+            bucket_minutes: number;
+            /**
+             * Format: int64
+             * @description Players with a session issued in the last 15 minutes.
+             */
+            ccu_now: number;
+            /** Format: int64 */
+            ccu_peak_24h: number;
+            /**
+             * Format: int64
+             * @description Players with a session issued today (UTC), so far.
+             */
+            dau_today: number;
+            /** @description 96 buckets, oldest first; a bucket counts players with a session issued within it. */
+            ccu: {
+                /**
+                 * Format: date-time
+                 * @description Bucket start.
+                 */
+                at: string;
+                /** Format: int64 */
+                players: number;
+            }[];
+            /** @description 30 UTC days, oldest first; today is partial. */
+            dau: {
+                /** Format: date */
+                date: string;
+                /** Format: int64 */
+                players: number;
+            }[];
+        };
     };
     responses: {
         /** @description The AI provider failed or could not be reached. */
@@ -4392,6 +4444,36 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["PlayerSummary"][];
+                        meta: components["schemas"]["Meta"];
+                    };
+                };
+            };
+            401: components["responses"]["E401"];
+            404: components["responses"]["E404"];
+        };
+    };
+    getProjectActivity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Project ID. */
+                projectId: string;
+                /** @description Environment ID. */
+                envId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Success. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PlayerActivity"];
                         meta: components["schemas"]["Meta"];
                     };
                 };

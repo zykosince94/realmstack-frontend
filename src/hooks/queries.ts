@@ -20,6 +20,7 @@ export const keys = {
   versions: (projectId: string, envId: string) => ["scope", projectId, envId, "versions"] as const,
   aiGenerations: (projectId: string, envId: string) => ["scope", projectId, envId, "ai-generations"] as const,
   aiGeneration: (projectId: string, envId: string, id: string) => ["scope", projectId, envId, "ai-generations", id] as const,
+  activity: (projectId: string, envId: string) => ["scope", projectId, envId, "activity"] as const,
   adminPlayers: (projectId: string, envId: string, search: string, bannedOnly: boolean) => ["scope", projectId, envId, "players", "list", search, bannedOnly] as const,
   adminPlayer: (projectId: string, envId: string, playerId: string, part: string) => ["scope", projectId, envId, "players", playerId, part] as const,
   // AI settings belong to the dashboard user, not to a project or environment.
@@ -159,6 +160,23 @@ export function useInvalidate() {
     scope: () => queryClient.invalidateQueries({ queryKey: keys.scope(project.id, environment.id) }),
     draft: () => queryClient.invalidateQueries({ queryKey: keys.draft(project.id, environment.id) }),
   }), [queryClient, project.id, environment.id]);
+}
+
+/**
+ * Concurrent (15-minute buckets, 24 h) and daily active players (30 days) for the
+ * Dashboard, derived on the server from session issuance. Refreshed every minute while
+ * the Dashboard is open, so "online now" stays current.
+ */
+export function useActivity() {
+  const { token, path, projectId, envId } = useScopeParams();
+  const query = useQuery({
+    queryKey: keys.activity(projectId, envId),
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    queryFn: () => unwrap(client.GET("/v1/projects/{projectId}/environments/{envId}/activity", { params: { path }, headers: authHeaders({ token }) }), token),
+  });
+  useReportError(query.error, "Could not load player activity.");
+  return query;
 }
 
 // --- Players (the admin views of the environment's players; actions are in playerActions.ts) ---
