@@ -29,7 +29,7 @@ export function catalogFrom(config: Config | undefined): Catalog {
   };
 }
 
-/** Conditions per achievement or quest stage (spec 2.6, 2.7). */
+/** Conditions per achievement or quest stage. */
 export const MAX_CONDITIONS = 5;
 
 /** Issues keyed by path inside the definition being edited. */

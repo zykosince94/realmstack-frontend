@@ -9,7 +9,7 @@ import { defaultCondition } from "../../lib/config";
 import { fromUTCInput, moveItem, toUTCInput, wouldCreateCycle } from "../../lib/quests";
 import { cleanRewards, ConditionRow, conditionPaths, fieldId, issueProps, MAX_CONDITIONS, rewardPaths, RewardsEditor, unplacedIssues, type Catalog, type Issues } from "../goals/GoalFields";
 
-/** Stages per quest (spec 2.7). */
+/** Stages per quest. */
 export const MAX_STAGES = 20;
 
 const id = (path: string) => fieldId("quest", path);

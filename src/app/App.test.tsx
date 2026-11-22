@@ -177,6 +177,8 @@ describe("Account menu", () => {
     expect(within(menu).getByText("admin@realmstack.local")).toBeInTheDocument();
     expect(within(menu).getByRole("menuitem", { name: "Settings" })).toHaveFocus();
     await user.keyboard("{ArrowDown}");
+    expect(within(menu).getByRole("menuitem", { name: "Documentation" })).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
     expect(within(menu).getByRole("menuitem", { name: "Log out" })).toHaveFocus();
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();

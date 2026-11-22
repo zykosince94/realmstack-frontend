@@ -4,7 +4,7 @@ import { lanesOf, scheduleSummary } from "../../lib/quests";
 import { rewardSummary } from "../goals/GoalFields";
 
 /**
- * The narrow-screen fallback for the canvas (spec 8): quests grouped by chain, in
+ * The narrow-screen fallback for the canvas: quests grouped by chain, in
  * draft order, with the same selection and issues. Prerequisites are
  * edited in the side panel here.
  */

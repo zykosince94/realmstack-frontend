@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Activity, ArrowUpRight, Award, Coins, Flag, HardDrive, Info, Layers, Package, ScrollText, ShieldBan, Sparkles, TrendingUp, Trophy, UserRound } from "lucide-react";
+import { Activity, ArrowUpRight, Award, BookOpen, Coins, Flag, HardDrive, Info, Layers, Package, ScrollText, ShieldBan, Sparkles, TrendingUp, Trophy, UserRound } from "lucide-react";
 import type { Notice } from "../../app/workspace";
 import { AppFooter, NoticeView } from "../../components/ui";
 import { BrandGlyph, BrandLogo } from "../../components/Brand";
@@ -33,11 +33,12 @@ const features = [
   { icon: Sparkles, title: "AI assistant", text: "bring your own key; it drafts, you publish" },
 ] as const;
 
-export function LoginScreen({ busy, notice, onDismiss, onAuthenticate }: {
+export function LoginScreen({ busy, notice, onDismiss, onAuthenticate, onOpenDocs }: {
   busy: boolean;
   notice: Notice | null;
   onDismiss: () => void;
   onAuthenticate: (email: string, password: string) => Promise<void>;
+  onOpenDocs: () => void;
 }) {
   const [email, setEmail] = useState(DEMO_LOGIN?.accounts[0].email ?? "");
   const [password, setPassword] = useState(DEMO_LOGIN?.password ?? "");
@@ -59,6 +60,9 @@ export function LoginScreen({ busy, notice, onDismiss, onAuthenticate }: {
               </li>
             ))}
           </ul>
+          <button type="button" className="button primary login-docs-button" onClick={onOpenDocs}>
+            <BookOpen size={18} aria-hidden="true" /> Read the documentation
+          </button>
         </div>
       </div>
       <div className="login-panel">
@@ -73,6 +77,10 @@ export function LoginScreen({ busy, notice, onDismiss, onAuthenticate }: {
             <label>Password<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
             <button className="button primary wide" disabled={busy}>{busy ? "Please wait…" : "Sign in"} <ArrowUpRight size={18} /></button>
           </form>
+          {/* The left feature panel is hidden on phones, so keep the docs entry point here. */}
+          <button type="button" className="button secondary wide login-docs-mobile" onClick={onOpenDocs}>
+            <BookOpen size={17} aria-hidden="true" /> Documentation
+          </button>
           {DEMO_LOGIN && (
             <div className="demo-hint"><Info size={17} />
               <div>

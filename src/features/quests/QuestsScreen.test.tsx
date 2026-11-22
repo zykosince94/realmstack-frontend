@@ -118,7 +118,8 @@ describe("Quests", { timeout: 20_000 }, () => {
     }));
     const user = await openQuests();
     expect(await screen.findByText("1 validation issue in the draft")).toBeInTheDocument();
-    expect(within(screen.getByRole("button", { name: "Edit Into the Mine" }).closest(".quest-node") as HTMLElement).getByText(/has issues/)).toBeInTheDocument();
+    const issueNode = (await screen.findByRole("button", { name: "Edit Into the Mine" })).closest(".quest-node") as HTMLElement;
+    expect(await within(issueNode).findByText(/has issues/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "quests[1].stages[1].conditions[0].stat_key" }));
     const stage = within(screen.getByRole("complementary", { name: "Quest editor" })).getByRole("region", { name: "Stage 2" });
     expect(within(stage).getByLabelText(/Counter/)).toHaveAttribute("aria-invalid", "true");

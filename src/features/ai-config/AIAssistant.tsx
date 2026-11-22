@@ -17,7 +17,7 @@ const operationIcons: Record<AIOperation, LucideIcon> = {
 const intro = "Describe what you need; the assistant proposes definitions, the server validates them like hand-written configuration, and nothing changes until you apply and publish.";
 
 /**
- * The AI configuration assistant (spec 2.8, 8). It proposes; people decide. A proposal
+ * The AI configuration assistant. It proposes; people decide. A proposal
  * is validated by the server like hand-written configuration, is applied to the draft
  * only when someone clicks Apply, and goes live only through Publish. The provider and
  * key live in Project settings (they belong to the user, not the project).

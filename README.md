@@ -1,112 +1,237 @@
-# RealmStack workspace and frontend
+# RealmStack Dashboard
 
-This repository contains the RealmStack React + TypeScript developer dashboard and local full-stack Compose setup. The Go API lives in the sibling `realmstack-backend/` Git repository.
+![License](https://img.shields.io/badge/license-Apache--2.0-blue)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)
+![Node](https://img.shields.io/badge/Node-22-339933?logo=nodedotjs&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 
-## Workspace layout
+**The control plane for a multi-tenant game backend — configure the economy, inspect players and ship live content without redeploying.**
 
-Keep the two repositories as sibling folders:
+RealmStack is a multi-tenant backend for player identity, inventory, economy, progression, leaderboards, stats, achievements, quests, cloud saves and bans. This repository is the React dashboard and the integrated Docker Compose demo. The Go API lives in the [RealmStack backend repository](../realmstack-backend).
 
-```text
-Game Backend Projects/
-├── RealmStack-MVP-Specification.html   # workspace reference, not in either app repo
-├── realmstack-backend/                 # independent Go Git repository
-└── realmstack-frontend/                # this React Git repository
+![RealmStack dashboard showing player activity, concurrent players and daily active players](public/screenshots/dashboard.png)
+
+[Features](#feature-map) · [Tech stack](#tech-stack) · [Screens](#screens) · [Quick start](#quick-start) · [Self-hosting](#self-hosting) · [Documentation](#documentation) · [Project layout](#project-layout)
+
+## Why it stands out
+
+- **Everything is tenant-scoped.** Switch projects and environments without leaking state between them; every query is keyed by the active scope.
+- **Draft → validate → publish.** Edit definitions safely, see field-level validation, publish immutable versions and roll back without rewriting history.
+- **Players are first-class.** Search the directory, inspect inventory, economy, progress, stats, achievements and quests, then perform every game action from one place.
+- **A real quest editor.** Build chains, stages, prerequisites and rewards on a React Flow canvas with lanes, auto-layout and cycle prevention.
+- **AI proposes, you decide.** Bring your own OpenAI-compatible key, review a validated proposal, apply it to the draft and publish explicitly.
+- **Docs built in.** The complete feature and HTTP reference is available before sign-in, inside the dashboard and as a downloadable OpenAPI contract.
+
+## Feature map
+
+| Surface | What it gives you |
+|---|---|
+| Dashboard | Online now, 24-hour peak, active today, CCU and DAU charts with keyboard, hover and table views |
+| Players | Searchable directory, profile, balances, inventory, progression, stats, achievements, quests, saves and moderation |
+| Inventory & economy | Draft catalog for items with metadata maps, currencies, live/draft status and publish |
+| Progression | XP threshold editor, level preview and version-pinned behaviour |
+| Leaderboards | Direction, season, top scores and board configuration |
+| Stats & flags | Server-reported counters and flags, plus definition management |
+| Achievements | Condition builder, rewards, hidden goals, claim policy and claim statistics |
+| Quests | React Flow canvas, stages, prerequisites, periods, windows and rewards |
+| AI assistant | Provider settings, generation history, proposal review and draft apply |
+| Test client | Registers or signs in a demo player exactly as a game client would |
+| Documentation | Public and in-dashboard guides, HTTP reference, deployment and operations |
+| Project settings | Environments, server credentials, publish, versions, rollback, import/export and AI provider settings |
+
+## Tech stack
+
+| Layer | Choice | Why it is here |
+|---|---|---|
+| UI | **React 19** | Mature ecosystem, hooks, first-class concurrent rendering and a small component model |
+| Language | **TypeScript ~5.8 strict** | Generated API types, refactor safety and errors at compile time instead of in a live game |
+| Build | **Vite 7** | Instant dev server, native ESM, tiny config, efficient lazy chunks |
+| Server state | **TanStack Query 5** | Scope-keyed caches, invalidation after mutations, retries and loading/error states without global-store boilerplate |
+| API client | **`openapi-fetch` + `openapi-typescript`** | Types generated directly from the backend contract; no hand-written request or response models |
+| Navigation | **Workspace state (no router)** | A compact administrative app with screen state, not URL-driven pages; documentation uses a single hash route |
+| Quest canvas | **React Flow + dagre + dnd-kit** | Graph editing, automatic layout and accessible drag interactions, lazy-loaded only when needed |
+| Docs renderer | **`react-markdown` + `remark-gfm`** | Contributor-friendly Markdown with tables and fenced code; no React rewrite for every guide |
+| Icons | **lucide-react** | Consistent SVG icons with tree-shaking and simple sizing |
+| Styling | **Plain CSS** | Full control of the dark console design, no runtime CSS engine, one predictable stylesheet |
+| Charts | **Hand-drawn SVG** | No chart dependency; accessible hover, keyboard readout and a table view in a tiny bundle |
+| Tests | **Vitest 4 + Testing Library + jsdom** | Fast unit and DOM tests on the same Vite pipeline as the app |
+| Lint | **ESLint 9** | Flat config, TypeScript rules and a zero-warning gate |
+| Packaging | **Docker Compose + Vite** | One command runs the dashboard and builds the API from a local backend checkout |
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Browser[Browser] --> Web[React dashboard]
+  Web -->|/v1 proxy| API[Go API]
+  Web --> Docs[Markdown documentation]
+  API --> PG[(PostgreSQL 17)]
+  API -. optional .-> Redis[(Redis)]
+  API -. optional .-> LLM[OpenAI-compatible provider]
 ```
 
-The workspace root is intentionally not a Git repository. This repository owns the integrated Compose file and its demo environment example. The engineering guides live in the workspace-level `study/` folder, outside both repositories. The Compose file builds the API from the sibling backend folder, so clone both repositories into the layout above before starting the whole demo.
+Server data lives in TanStack Query keyed by project and environment. Mutations invalidate exactly what changed. Player actions live in the Players screen and call dashboard-token admin routes; configuration screens never carry player state or server credentials.
 
-## Run the full local demo
+## Screens
 
-Prerequisites: Docker Desktop and both sibling repositories.
+<p align="center">
+  <img src="public/screenshots/players.png" alt="Player profile with balances, tabs and stats and flags management" width="49%">
+  <img src="public/screenshots/player-inventory.png" alt="Player profile with inventory, economy, progress, stats, achievements and quests tabs" width="49%">
+</p>
+<p align="center">
+  <img src="public/screenshots/achievements.png" alt="Achievement editor with conditions and rewards open beside the card grid" width="49%">
+  <img src="public/screenshots/quests.png" alt="Quest canvas with the quest editor and prerequisite connections open" width="49%">
+</p>
+<p align="center">
+  <img src="public/screenshots/ai-assistant.png" alt="AI assistant generating 10 enchanted swords with the proposal JSON open" width="49%">
+  <img src="public/screenshots/test-client.png" alt="Test client for registering or signing in a demo player" width="49%">
+</p>
+<p align="center">
+  <img src="public/screenshots/catalog.png" alt="Inventory and economy catalog with the item metadata map and currency editors" width="100%">
+</p>
+<p align="center">
+  <img src="public/screenshots/docs-page.png" alt="Public documentation page with search, guides and API reference" width="100%">
+</p>
 
-```powershell
-Copy-Item .env.example .env
+## Quick start
+
+### Full stack: dashboard + API + PostgreSQL
+
+Clone the [backend repository](../realmstack-backend) into the same parent folder as this one (`realmstack-backend/` beside `realmstack-frontend/`), then run this from `realmstack-frontend/`:
+
+```sh
+cp .env.example .env
 docker compose up -d --build --wait
 ```
 
-The stack is the Compose project `realmstack`: containers `realmstack-db-1`, `realmstack-api-1` and `realmstack-web-1` (list them with `docker compose ps`), images `realmstack-api:local` and `realmstack-web:local`, and the database volume `realmstack_db-data`. All ports are bound to `127.0.0.1`.
+| Service | URL |
+|---|---|
+| Dashboard | http://localhost:5174 |
+| API | http://localhost:8080 |
+| Health | http://localhost:8080/healthz |
+| Documentation | http://localhost:5174/#/docs |
+| PostgreSQL | `127.0.0.1:5434` |
 
-Open the dashboard at <http://localhost:5174>. The API listens at <http://localhost:8080>; check <http://localhost:8080/healthz> for readiness. Browser API calls are proxied through Vite. PostgreSQL is published on host port 5434 to avoid colliding with an existing local database.
+Containers: `realmstack-db-1`, `realmstack-api-1`, `realmstack-web-1`. Images: `realmstack-api:local`, `realmstack-web:local`. Data volume: `realmstack_db-data`. All ports bind to loopback.
 
-Local-only seed credentials:
+Local-only demo credentials:
 
-- Dashboard: `admin@realmstack.local` / `RealmStackLocal!2026`
-- Player: `player@realmstack.local` / `PlayerLocal!2026`
-- Demo server credential: `rs_demo.realmstack-local-server-secret`
+| Purpose | Value |
+|---|---|
+| Dashboard | `admin@realmstack.local` / `RealmStackLocal!2026` |
+| Clean workspace | `admin` / `RealmStackLocal!2026` (no projects) |
+| Player | `player@realmstack.local` / `PlayerLocal!2026` |
+| Public environment ID | `pub_realmstack_demo_dev` |
+| Demo server credential | `rs_demo.realmstack-local-server-secret` |
 
-Do not expose this Compose stack to the internet or use these credentials outside a disposable development environment.
+Do not expose this stack to the internet or reuse these credentials outside a disposable environment.
 
-To clear the demo database volume and reseed from scratch:
+To reset the demo database:
 
-```powershell
+```sh
 docker compose down -v
 docker compose up --build
 ```
 
-`docker compose down -v` deletes the local demo database. Do not run it if you want to keep current demo data.
+`down -v` deletes the local database volume. Do not run it if you need the data.
 
-## Run only the frontend
+### Frontend only
 
-```powershell
+```sh
 npm ci
 npm run dev
 ```
 
-Open <http://localhost:5173>. Vite proxies `/v1` requests to `http://localhost:8080` by default; set `VITE_API_PROXY_TARGET` if the API runs elsewhere. `VITE_*` values are shipped to the browser and must never contain server credentials or signing secrets.
+Open <http://localhost:5173>. Vite proxies `/v1` to `http://localhost:8080`; set `VITE_API_PROXY_TARGET` to change it. `VITE_*` values are public browser configuration — never put secrets there.
 
-Checks (the same ones CI runs in `.github/workflows/ci.yml`):
+Quality gates:
 
-```powershell
+```sh
 npm run lint
 npm run typecheck
 npm test
 npm run build
 ```
 
-## Code layout
+## Self-hosting
+
+The bundled Compose stack is a local demo. For a host you control, this repository includes the deployment files:
+
+- [`docker-compose.selfhost.yml`](docker-compose.selfhost.yml) — API, static dashboard and optional Redis
+- [`Dockerfile.selfhost`](Dockerfile.selfhost) — multi-stage dashboard build into nginx
+- [`deploy/nginx.conf`](deploy/nginx.conf) — static fallback plus `/v1` and `/healthz` proxy
+- [`.env.selfhost.example`](.env.selfhost.example) — database, JWT secret, proxy, Redis and AI settings
+
+The **Self-hosting** page in the dashboard docs covers PostgreSQL, TLS, the first dashboard user, backups, Redis consistency and AI setup.
+
+## Documentation
+
+The documentation site is available at `#/docs` from the sign-in page and from the dashboard sidebar and account menu. It covers the product model, every feature, the complete HTTP reference, deployment and operations. Content is Markdown under `src/features/docs/content/`; the API contract can be downloaded from the page sidebar.
+
+After a backend contract change:
+
+```sh
+npm run generate:api   # regenerate src/api/generated/schema.ts
+npm run sync:openapi   # copy the contract to public/openapi.yaml
+npm run check:openapi  # verify that copy matches the backend contract
+```
+
+Then update the human API reference when routes or behaviour changed.
+
+## Project layout
 
 ```text
 src/main.tsx                 React root + TanStack Query provider
-src/app/                     App shell (sign-in, project/environment selection, navigation), workspace context, query client
-src/api/generated/schema.ts  generated from ../realmstack-backend/api/openapi.yaml; never edit by hand
+src/app/                     App shell, workspace context, account menu, query client
+src/api/generated/schema.ts  generated from ../realmstack-backend/api/openapi.yaml; never edit
 src/api/client.ts            typed openapi-fetch client, unwrap(), authHeaders(), idempotencyKey()
-src/api/errors.ts            ApiError (status, code, field errors, token), describeError, isExpiredSession
-src/api/types.ts             friendly aliases for generated types
-src/hooks/queries.ts         query keys and hooks (draft, validation, published, credentials, achievement/quest stats, player data)
-src/hooks/useMediaQuery.ts   media-query hook (the quest editor's narrow-screen fallback)
-src/components/ui.tsx        shared presentational pieces
-src/lib/config.ts            pure helpers (select keys, slots, thresholds, conditions, field-error mapping)
-src/lib/quests.ts            pure quest-graph helpers (loop checks, connect/disconnect, chain lanes, dagre layout, editor_layout)
-src/features/<screen>/       one folder per screen: dashboard (activity charts), players, economy, progression,
-                             leaderboards, stats, achievements, quests, settings, auth, projects
-src/features/test-client/    the Test client: registers or signs in a demo player the way a game client does (a way to create players to manage)
-src/features/players/        Players: directory (with a banned filter), profile and every player-side action (PlayerTabs, including Saves and Moderation); hooks/playerActions.ts holds the admin calls
-src/features/goals/          condition builder and reward picker shared by achievements and quests
-src/features/ai-config/      AI assistant: generate, review, apply, publish (lazy-loaded); AIProviderPanel is the provider/key form shown in Project settings
-src/lib/ai.ts                pure helpers for the AI screen (operations, params, proposal rows)
-src/test/                    fetch mock, shared fixtures, renderApp(), React Flow/matchMedia stand-ins for jsdom
-src/components/Brand.tsx     the castle-rack mark (BrandGlyph, BrandLogo, BrandWatermark); public/favicon.svg repeats its paths
-src/app/UserMenu.tsx         the account menu behind the top-right avatar (Settings, Log out)
-src/lib/chart.ts             pure helpers for the hand-drawn SVG charts (nice axis, column path, nearest point)
+src/api/errors.ts            ApiError, describeError, expired-session detection
+src/hooks/queries.ts         query keys and hooks for every scoped resource
+src/lib/                     pure helpers: config, quests, AI, charts, docs
+src/features/dashboard/      player activity and charts
+src/features/players/        directory, profile, player actions, saves, moderation
+src/features/economy/        item and currency catalog editors
+src/features/progression/    XP curve editor
+src/features/leaderboards/   board configuration and top scores
+src/features/stats/          stats and flags definitions
+src/features/achievements/   achievement list and editor
+src/features/quests/         lazy-loaded React Flow quest canvas and editor
+src/features/ai-config/      lazy-loaded AI assistant and provider panel
+src/features/settings/       environments, credentials, publish, versions, import/export
+src/features/docs/           Markdown documentation, tabs, TOC, search
+src/features/test-client/    register/sign in a demo player like a game client
+src/test/                    fetch mock, fixtures, renderApp(), jsdom helpers
+public/screenshots/          README and documentation screenshots
+docker-compose.selfhost.yml  self-hosted API + static dashboard
+Dockerfile.selfhost          multi-stage dashboard build into nginx
+deploy/nginx.conf            static serving + /v1 and /healthz proxy
+.env.selfhost.example        self-hosting environment template
 ```
 
-**Request and response types are generated, never hand-written.** After the backend changes `api/openapi.yaml`, regenerate and commit the result:
+## API contract and repository relationship
 
-```powershell
-npm run generate:api   # reads ../realmstack-backend/api/openapi.yaml
-```
+This is an independent Git repository, but the two projects share a contract:
 
-The generated file is committed so this repository builds on its own (CI cannot see the backend repository). TypeScript then flags every call that no longer matches the contract.
+- `npm run generate:api` reads `../realmstack-backend/api/openapi.yaml` when both repositories are checked out side by side; the generated client is committed so CI and `npm run build` work without the backend checkout.
+- The integrated Compose file builds the API from that local backend checkout.
+- The backend's route test fails if the OpenAPI document and the real routes disagree in either direction.
 
-Server data lives in the TanStack Query cache, keyed by project and environment (`src/hooks/queries.ts`); a mutation refreshes what it changed by invalidating those keys. Local form state stays in `useState`.
+See the [RealmStack backend repository](../realmstack-backend) for the Go API, migrations, load tests and contract.
 
-The Quests screen is loaded lazily (`React.lazy` in `src/app/App.tsx`): React Flow (`@xyflow/react`), `@dagrejs/dagre` and `@dnd-kit` ship in a separate chunk that downloads only when the screen opens. Node positions are saved in the draft's `editor_layout.quests`; publishing ignores them.
+## Security and quality
 
-## Repositories and learning guides
+- Dashboard and player tokens are separate; a player token cannot call dashboard routes.
+- Player actions from the dashboard use admin idempotency keys and the same domain handlers as the game.
+- API errors are mapped to inline field errors; destructive actions require confirmation.
+- Lint stays at zero warnings; TypeScript is strict; generated types prevent contract drift.
+- `VITE_*` values are public. Server credentials stay on the backend.
 
-- Backend repo: `../realmstack-backend/` — run Go tests with `go test ./...` and `go vet ./...`.
-- Frontend study guide: `../study/realmstack-frontend-guide.html` when using the original workspace.
-- Backend study guide: `../study/realmstack-backend-guide.html` when using the original workspace.
-- RealmStack MVP reference: [`../RealmStack-MVP-Specification.html`](../RealmStack-MVP-Specification.html) when working in the original workspace.
+## Contributing and security
 
-The demo includes a Dashboard that leads with player activity (online now, 24-hour peak, active today, a concurrent-players chart and a daily-active-players chart with hover, keyboard and table access), project/environment management, a Players screen where an admin looks players up and manages them (grant items, credit or deduct currency, award XP, submit scores, increment stats and set flags, claim achievements, accept, abandon and claim quests, view and repair cloud saves (edits send the loaded version, so a newer save from the game is never overwritten), and ban or unban with a reason, a duration and a ban history; players never use the dashboard, so no feature screen has player panels) and a separate Test client that registers a demo player the way a game client does, inventory/economy, progression, leaderboards, stats & flags, achievements (card grid, side-panel editor with condition builder and reward picker, inline validation issues, claim statistics), quests (React Flow canvas with chain lanes, drag-to-connect prerequisites with loop prevention, auto-arrange, minimap; side panel with drag-to-reorder stages; issue bar; a list on narrow screens), an optional AI assistant (your own OpenAI or OpenAI-compatible key, set in Project settings; proposals are validated, applied to the draft only after confirmation, then published), version history with restore and per-version export, and configuration import/export as JSON in Project settings. Sessions survive a reload (an httpOnly refresh cookie), and the demo seeds an AI assistant history covering every operation and outcome. The Unity sample is not included yet. To enable AI in the Compose stack, set `AI_ENCRYPTION_KEY` in `.env` (see `.env.example`). This is a local learning/MVP environment, not a production deployment; configure real secrets, HTTPS, backups, monitoring and abuse protection before external use.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the development workflow, [`SECURITY.md`](SECURITY.md) to report a vulnerability privately, and [`CHANGELOG.md`](CHANGELOG.md) for release notes.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).

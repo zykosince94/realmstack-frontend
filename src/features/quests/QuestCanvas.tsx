@@ -5,7 +5,7 @@ import { GripHorizontal, Repeat, Server, Sparkles, Timer } from "lucide-react";
 import type { QuestDefinition, QuestStat } from "../../api/types";
 import { LANE_HEIGHT, laneIndexForY, lanesOf, laneTop, NODE_WIDTH, placeNodes, wouldCreateCycle, type Position as XY, type QuestLayout } from "../../lib/quests";
 
-// The quest graph canvas (spec 8): one custom node per quest, horizontal chain lanes,
+// The quest graph canvas: one custom node per quest, horizontal chain lanes,
 // prerequisite edges drawn from the required quest to the quest that needs it, and
 // drag-to-connect with loop prevention. React Flow owns pan, zoom, the minimap and
 // dragging; the draft stays the source of truth, so every change is reported up and

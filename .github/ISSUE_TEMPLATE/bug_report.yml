@@ -1,0 +1,33 @@
+name: Bug report
+description: Something in the dashboard or the documentation is wrong or broken.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not report security vulnerabilities here. See SECURITY.md for the private process.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: v1.0.0
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Which screen, what you clicked, and any error message shown. Screenshots help.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and how you run the dashboard
+      placeholder: Firefox 140, self-hosted behind nginx

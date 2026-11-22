@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, Award, Boxes, Flag, FlaskConical, LayoutDashboard, LogOut, Plus, ScrollText, ShieldCheck, Sparkles, Trophy, Users, Wallet } from "lucide-react";
+import { Activity, Award, BookOpen, Boxes, Flag, FlaskConical, LayoutDashboard, LogOut, Plus, ScrollText, ShieldCheck, Sparkles, Trophy, Users, Wallet } from "lucide-react";
 import { authHeaders, client, unwrap } from "../api/client";
 import { describeError, isExpiredSession } from "../api/errors";
 import type { Environment, Project } from "../api/types";
@@ -25,6 +25,10 @@ import { Settings } from "../features/settings/Settings";
 const QuestsScreen = lazy(() => import("../features/quests/QuestsScreen"));
 // AI is optional; its screen is loaded only when opened.
 const AIAssistant = lazy(() => import("../features/ai-config/AIAssistant"));
+// Documentation (Markdown renderer and all content) is a long read; keep it out of the
+// initial bundle. The public page and the dashboard screen share the same lazy chunk.
+const DocsPublic = lazy(() => import("../features/docs/DocsPublic").then((module) => ({ default: module.DocsPublic })));
+const DocsScreen = lazy(() => import("../features/docs/DocsScreen").then((module) => ({ default: module.DocsScreen })));
 
 const screens = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, view: Dashboard },
@@ -38,10 +42,11 @@ const screens = [
   { id: "ai", label: "AI assistant", icon: Sparkles, view: AIAssistant },
   // Simulates a game client and game server while you build; real players are under Players.
   { id: "client", label: "Test client", icon: FlaskConical, view: TestClient },
+  { id: "docs", label: "Documentation", icon: BookOpen, view: DocsScreen },
   { id: "settings", label: "Project settings", icon: ShieldCheck, view: Settings },
 ] as const;
 type Screen = ScreenId;
-// Every screen in the list must be a ScreenId, and every ScreenId must be listed.
+// Every sidebar entry must be a ScreenId, and every ScreenId must be listed.
 const screensMatch: (typeof screens)[number]["id"] extends ScreenId ? (ScreenId extends (typeof screens)[number]["id"] ? true : never) : never = true;
 void screensMatch;
 
@@ -75,11 +80,29 @@ export function App() {
   const [notice, setNotice] = useState<Notice | null>(null);
   const [busy, setBusy] = useState(false);
   const [creatingProject, setCreatingProject] = useState(false);
+  // #/docs is the public documentation page. It works signed out and is reachable from the
+  // sign-in page; inside the dashboard, the account menu opens the docs screen.
+  const [publicDocs, setPublicDocs] = useState(() => window.location.hash === "#/docs");
 
   // Switching screens clears the previous screen's notice: it described that screen.
   const setScreen = useCallback((next: Screen) => {
     setScreenState(next);
     setNotice(null);
+  }, []);
+
+  // Keep the public docs page in sync with the URL hash (browser back/forward included).
+  useEffect(() => {
+    const sync = () => setPublicDocs(window.location.hash === "#/docs");
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, []);
+  const openDocs = useCallback(() => {
+    window.location.hash = "#/docs";
+    setPublicDocs(true);
+  }, []);
+  const closeDocs = useCallback(() => {
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    setPublicDocs(false);
   }, []);
 
   // Dashboard sessions: the access token lives in memory and expires quickly; an httpOnly
@@ -220,11 +243,17 @@ export function App() {
     });
   }
 
+  if (publicDocs) return (
+    <Suspense fallback={<div className="boot-screen" role="status"><BrandLogo size={30} /> Loading documentation…</div>}>
+      <DocsPublic onExit={closeDocs} />
+    </Suspense>
+  );
   if (restoring) return <div className="boot-screen" role="status"><BrandLogo size={30} /> Restoring your session…</div>;
-  if (!token) return <LoginScreen busy={busy} notice={notice} onDismiss={() => setNotice(null)} onAuthenticate={authenticate} />;
+  if (!token) return <LoginScreen busy={busy} notice={notice} onDismiss={() => setNotice(null)} onAuthenticate={authenticate} onOpenDocs={openDocs} />;
 
   const email = user?.email ?? "";
-  const Active = screens.find((row) => row.id === screen)!.view;
+  // `docs` is not in the sidebar: the account menu opens it, so fall back to its lazy view.
+  const Active = screens.find((row) => row.id === screen)?.view ?? DocsScreen;
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -249,13 +278,19 @@ export function App() {
             {project && <button className="button secondary" onClick={() => setCreatingProject(true)}><Plus size={16} /> New project</button>}
             {projects.length > 0 && <select aria-label="Project" value={project?.id ?? ""} onChange={(event) => setProjectId(event.target.value)}>{projects.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select>}
             {environments.length > 0 && <select aria-label="Environment" value={environment?.id ?? ""} onChange={(event) => setEnvironmentId(event.target.value)}>{environments.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select>}
-            <UserMenu email={email} onSettings={() => setScreen("settings")} onSignOut={() => signOut()} />
+            <UserMenu email={email} onDocs={() => setScreen("docs")} onSettings={() => setScreen("settings")} onSignOut={() => signOut()} />
           </div>
         </header>
         {creatingProject && <CreateProjectModal token={token} busy={busy} run={run} onClose={() => setCreatingProject(false)} onCreated={(created) => { selectProject(created); setCreatingProject(false); }} />}
         <div className="content">
           {notice && <NoticeView notice={notice} onDismiss={() => setNotice(null)} />}
-          {projectsQuery.isPending ? <p className="empty-text">Loading projects…</p>
+          {screen === "docs" ? (
+            // Documentation needs no project or environment, so it also works in a clean
+            // workspace.
+            <Suspense fallback={<p className="empty-text">Loading documentation…</p>}>
+              <DocsScreen />
+            </Suspense>
+          ) : projectsQuery.isPending ? <p className="empty-text">Loading projects…</p>
             : !project ? <ProjectsEmpty token={token} busy={busy} run={run} onCreated={selectProject} />
             : !environment ? (environmentsQuery.isPending ? <p className="empty-text">Loading environments…</p>
               : <div className="empty-card"><div className="empty-icon"><Boxes /></div><h2>Choose an environment</h2><p>This project does not have an environment yet.</p><button className="button primary" disabled={busy} onClick={() => void run(async () => { const created = await unwrap(client.POST("/v1/projects/{projectId}/environments", { params: { path: { projectId: project.id } }, body: { name: "development" }, headers: authHeaders({ token }) }), token); setEnvironments([created]); setEnvironmentId(created.id); })}><Plus size={18} /> Create development environment</button></div>)

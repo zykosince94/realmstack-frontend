@@ -14,7 +14,7 @@ import { QuestCanvas } from "./QuestCanvas";
 import { QuestEditor } from "./QuestEditor";
 import { QuestList } from "./QuestList";
 
-/** Below this width the canvas falls back to a list plus the side panel (spec 8). */
+/** Below this width the canvas falls back to a list plus the side panel. */
 export const NARROW_QUERY = "(max-width: 900px)";
 
 function blankQuest(firstFlag: string | undefined): QuestDefinition {

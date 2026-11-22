@@ -16,7 +16,7 @@ export function niceScale(max: number, targetTicks = 4): { max: number; ticks: n
   return { max: top, ticks };
 }
 
-/** Axis numbers: in full under 10,000, compact (12K, 1.2M) above, as the dataviz spec asks. */
+/** Axis numbers: in full under 10,000, compact (12K, 1.2M) above. */
 export function formatCount(value: number): string {
   if (Math.abs(value) < 10_000) return value.toLocaleString();
   return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(value);

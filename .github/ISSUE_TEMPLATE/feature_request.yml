@@ -1,0 +1,19 @@
+name: Feature request
+description: Suggest a screen, workflow or documentation improvement.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the task you want to finish in the dashboard.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like the dashboard to do?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What do you do today instead?

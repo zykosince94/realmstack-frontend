@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
-import { ChevronDown, LogOut, Settings } from "lucide-react";
+import { BookOpen, ChevronDown, LogOut, Settings } from "lucide-react";
 
 /**
  * The account menu behind the top-right avatar. The avatar used to sign out on click,
- * which made one stray click end the session; now it opens a menu (Settings, Log out).
+ * which made one stray click end the session; now it opens a menu (Settings,
+ * Documentation, Log out).
  *
  * It follows the ARIA menu-button pattern: the button says it has a menu and whether it is
  * open, opening moves focus to the first item, arrow keys move between items, Escape
  * closes and returns focus to the button, and a click outside closes it.
  */
-export function UserMenu({ email, onSettings, onSignOut }: { email: string; onSettings: () => void; onSignOut: () => void }) {
+export function UserMenu({ email, onDocs, onSettings, onSignOut }: { email: string; onDocs: () => void; onSettings: () => void; onSignOut: () => void }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
@@ -53,7 +54,8 @@ export function UserMenu({ email, onSettings, onSignOut }: { email: string; onSe
         <div className="user-menu-panel" role="menu" aria-label="Account" onKeyDown={onMenuKey}>
           <div className="user-menu-head" role="presentation"><b>{email}</b><small>Workspace owner</small></div>
           <button ref={(el) => { items.current[0] = el; }} role="menuitem" className="user-menu-item" onClick={() => choose(onSettings)}><Settings size={17} /> Settings</button>
-          <button ref={(el) => { items.current[1] = el; }} role="menuitem" className="user-menu-item danger" onClick={() => choose(onSignOut)}><LogOut size={17} /> Log out</button>
+          <button ref={(el) => { items.current[1] = el; }} role="menuitem" className="user-menu-item" onClick={() => choose(onDocs)}><BookOpen size={17} /> Documentation</button>
+          <button ref={(el) => { items.current[2] = el; }} role="menuitem" className="user-menu-item danger" onClick={() => choose(onSignOut)}><LogOut size={17} /> Log out</button>
         </div>
       )}
     </div>

@@ -1,0 +1,66 @@
+# Self-hosted RealmStack: API + static dashboard + your PostgreSQL.
+#
+# Copy .env.selfhost.example to .env.selfhost, fill in the database and JWT secret, then:
+#   docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost up -d --build --wait
+#
+# PostgreSQL is external to this file. The API applies migrations on startup.
+# Only the web port is published; put TLS and your public hostname in front of it.
+name: realmstack-selfhost
+
+services:
+  api:
+    build:
+      context: ../realmstack-backend
+    image: realmstack-api:selfhost
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      HTTP_ADDR: :8080
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env.selfhost}
+      DATABASE_DIRECT_URL: ${DATABASE_DIRECT_URL:-}
+      DATABASE_REPLICA_URL: ${DATABASE_REPLICA_URL:-}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env.selfhost}
+      DEMO_MODE: "false"
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      REDIS_URL: ${REDIS_URL:-}
+      AI_ENCRYPTION_KEY: ${AI_ENCRYPTION_KEY:-}
+      AI_ALLOW_PRIVATE_URLS: ${AI_ALLOW_PRIVATE_URLS:-false}
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+
+  # Optional leaderboard rank projection. Off unless you start the stack with `--profile redis`
+  # and set REDIS_URL=redis://redis:6379/0. It must never evict keys; PostgreSQL stays the
+  # source of truth. Not published to the host.
+  redis:
+    image: redis:8.8.3-alpine
+    profiles: ["redis"]
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory-policy", "noeviction", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.selfhost
+    image: realmstack-web:selfhost
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8080}:80"
+
+volumes:
+  redis-data:
