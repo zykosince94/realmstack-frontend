@@ -85,6 +85,8 @@ src/features/goals/          condition builder and reward picker shared by achie
 src/features/ai-config/      AI assistant: generate, review, apply, publish (lazy-loaded); AIProviderPanel is the provider/key form shown in Project settings
 src/lib/ai.ts                pure helpers for the AI screen (operations, params, proposal rows)
 src/test/                    fetch mock, shared fixtures, renderApp(), React Flow/matchMedia stand-ins for jsdom
+src/components/Brand.tsx     the castle-rack mark (BrandGlyph, BrandLogo, BrandWatermark); public/favicon.svg repeats its paths
+src/app/UserMenu.tsx         the account menu behind the top-right avatar (Settings, Log out)
 src/lib/chart.ts             pure helpers for the hand-drawn SVG charts (nice axis, column path, nearest point)
 ```
 

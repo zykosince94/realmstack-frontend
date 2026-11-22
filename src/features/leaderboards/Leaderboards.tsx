@@ -25,18 +25,18 @@ export function Leaderboards() {
       <PageTitle eyebrow="COMPETITIVE LEADERBOARDS" title="Leaderboards" description="PostgreSQL is the source of truth. Rankings are computed deterministically with each player's best score and earliest-best tie break." />
       {published && !published.version ? <section className="panel"><NotPublished /></section> : <>
         <div className="two-column">
-          <Panel title="Leaderboard" subtitle="Choose one to inspect and load" icon={<Trophy size={18} />}>
+          <Panel title="Leaderboard" subtitle="Choose one to inspect and load" icon={<Trophy size={20} />}>
             <div className="stack-form">
               <label>Leaderboard<select aria-label="Leaderboard" value={key} onChange={(event) => setChoice(event.target.value)}>{boards.map((board) => <option key={board.key} value={board.key}>{board.key}</option>)}</select></label>
               <p className="small-note">Scores come from the game. To submit one for a player, open the player in Players.</p>
             </div>
           </Panel>
-          <Panel title="Leaderboard definition" subtitle={published ? `${boards.length} live leaderboard(s)` : "Loading…"} icon={<Gauge size={18} />}>
+          <Panel title="Leaderboard definition" subtitle={published ? `${boards.length} live leaderboard(s)` : "Loading…"} icon={<Gauge size={20} />}>
             {leaderboard ? <div className="definition-list"><div><span>Key</span><b>{leaderboard.key}</b></div><div><span>Direction</span><b>{leaderboard.direction}-is-better</b></div><div><span>Tie-break</span><b>Earliest best score</b></div><div><span>Season</span><b>{leaderboard.season_start || leaderboard.season_end ? "Seasonal" : "All time"}</b></div></div> : <p className="empty-text">No leaderboard is published.</p>}
-            <button className="button secondary" disabled={w.busy || !key} onClick={() => void w.run(loadBoard)}><RefreshCw size={15} /> Load top scores</button>
+            <button className="button secondary" disabled={w.busy || !key} onClick={() => void w.run(loadBoard)}><RefreshCw size={17} /> Load top scores</button>
           </Panel>
         </div>
-        <Panel title="Top players" subtitle={`Current environment · ${key || "no leaderboard selected"}`} icon={<Trophy size={18} />}><DataTable columns={["Rank", "Player", "Best score", "Achieved"]} rows={entries.map((row) => [String(row.rank), row.display_name, String(row.score), row.submitted_at])} empty="Load the leaderboard to view top scores." /></Panel>
+        <Panel title="Top players" subtitle={`Current environment · ${key || "no leaderboard selected"}`} icon={<Trophy size={20} />}><DataTable columns={["Rank", "Player", "Best score", "Achieved"]} rows={entries.map((row) => [String(row.rank), row.display_name, String(row.score), row.submitted_at])} empty="Load the leaderboard to view top scores." /></Panel>
       </>}
     </>
   );

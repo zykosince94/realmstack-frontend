@@ -140,7 +140,7 @@ export function ConditionRow({ path, number, label = "", idPrefix, condition, ca
           <FieldIssue id={id("target")} message={issues[`${path}.target`]} />
         </label>
       )}
-      <button type="button" className="icon-button" aria-label={`Remove ${label.toLowerCase()}condition ${number}`} onClick={onRemove}><Trash2 size={15} /></button>
+      <button type="button" className="icon-button" aria-label={`Remove ${label.toLowerCase()}condition ${number}`} onClick={onRemove}><Trash2 size={17} /></button>
     </fieldset>
   );
 }
@@ -176,7 +176,7 @@ export function RewardsEditor({ path, label = "", idPrefix, rewards, catalog, is
               <input type="number" min={1} max={max} value={reward.quantity} onChange={(event) => onChange({ ...rewards, items: items.map((r, i) => i === index ? { ...r, quantity: Number(event.target.value) } : r) })} {...issueProps(issues, `${p}.quantity`, id(`${p}.quantity`))} />
               <FieldIssue id={id(`${p}.quantity`)} message={issues[`${p}.quantity`]} />
             </label>
-            <button type="button" className="icon-button" aria-label={`Remove ${lower}item reward ${index + 1}`} onClick={() => onChange({ ...rewards, items: items.filter((_, i) => i !== index) })}><X size={15} /></button>
+            <button type="button" className="icon-button" aria-label={`Remove ${lower}item reward ${index + 1}`} onClick={() => onChange({ ...rewards, items: items.filter((_, i) => i !== index) })}><X size={17} /></button>
           </div>
         );
       })}
@@ -194,7 +194,7 @@ export function RewardsEditor({ path, label = "", idPrefix, rewards, catalog, is
               <input type="number" min={1} value={reward.amount} onChange={(event) => onChange({ ...rewards, currencies: currencies.map((r, i) => i === index ? { ...r, amount: Number(event.target.value) } : r) })} {...issueProps(issues, `${p}.amount`, id(`${p}.amount`))} />
               <FieldIssue id={id(`${p}.amount`)} message={issues[`${p}.amount`]} />
             </label>
-            <button type="button" className="icon-button" aria-label={`Remove ${lower}currency reward ${index + 1}`} onClick={() => onChange({ ...rewards, currencies: currencies.filter((_, i) => i !== index) })}><X size={15} /></button>
+            <button type="button" className="icon-button" aria-label={`Remove ${lower}currency reward ${index + 1}`} onClick={() => onChange({ ...rewards, currencies: currencies.filter((_, i) => i !== index) })}><X size={17} /></button>
           </div>
         );
       })}
@@ -203,8 +203,8 @@ export function RewardsEditor({ path, label = "", idPrefix, rewards, catalog, is
         <FieldIssue id={id(`${path}.xp`)} message={issues[`${path}.xp`]} />
       </label>
       <div className="button-row">
-        <button type="button" className="button secondary small" aria-label={`Add ${lower}item reward`} disabled={catalog.items.length === 0} onClick={() => onChange({ ...rewards, items: [...items, { item_key: catalog.items[0].key, quantity: 1 }] })}><Plus size={14} /> Item</button>
-        <button type="button" className="button secondary small" aria-label={`Add ${lower}currency reward`} disabled={catalog.currencies.length === 0} onClick={() => onChange({ ...rewards, currencies: [...currencies, { currency_key: catalog.currencies[0].key, amount: 10 }] })}><Plus size={14} /> Currency</button>
+        <button type="button" className="button secondary small" aria-label={`Add ${lower}item reward`} disabled={catalog.items.length === 0} onClick={() => onChange({ ...rewards, items: [...items, { item_key: catalog.items[0].key, quantity: 1 }] })}><Plus size={16} /> Item</button>
+        <button type="button" className="button secondary small" aria-label={`Add ${lower}currency reward`} disabled={catalog.currencies.length === 0} onClick={() => onChange({ ...rewards, currencies: [...currencies, { currency_key: catalog.currencies[0].key, amount: 10 }] })}><Plus size={16} /> Currency</button>
       </div>
     </div>
   );

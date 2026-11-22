@@ -78,7 +78,7 @@ export function AISettingsCard({ settings }: { settings: AISettings }) {
     : "Add your own API key: OpenAI, or any OpenAI-compatible service. You are billed by your provider for what you generate.";
 
   return (
-    <Panel title="AI provider" subtitle={subtitle} icon={<KeyRound size={18} />} className="ai-provider">
+    <Panel title="AI provider" subtitle={subtitle} icon={<KeyRound size={20} />} className="ai-provider">
       <form className="stack-form" onSubmit={(event) => { event.preventDefault(); void save(); }}>
         <label>Provider
           <select value={provider} onChange={(event) => changeProvider(asProvider(event.target.value))}>
@@ -111,8 +111,8 @@ export function AISettingsCard({ settings }: { settings: AISettings }) {
         </p>
         <div className="button-row">
           <button className="button primary" disabled={w.busy}>Save</button>
-          {settings.configured && <button type="button" className="button secondary" disabled={w.busy} onClick={() => void test()}><PlugZap size={14} /> Re-check saved key</button>}
-          {settings.configured && <button type="button" className="button ghost-danger" disabled={w.busy} onClick={() => void remove()}><Trash2 size={14} /> Remove key</button>}
+          {settings.configured && <button type="button" className="button secondary" disabled={w.busy} onClick={() => void test()}><PlugZap size={16} /> Re-check saved key</button>}
+          {settings.configured && <button type="button" className="button ghost-danger" disabled={w.busy} onClick={() => void remove()}><Trash2 size={16} /> Remove key</button>}
         </div>
       </form>
     </Panel>

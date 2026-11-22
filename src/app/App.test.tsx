@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { apiError, mockApi } from "../test/mockApi";
@@ -161,5 +161,45 @@ describe("App", () => {
     await waitFor(() => expect(server.find("PATCH", "/v1/projects/p1")).toHaveLength(1));
     expect(server.find("PATCH", "/v1/projects/p1")[0].body).toEqual({ status: "archived" });
     expect(await screen.findByText(/Project archived/)).toBeInTheDocument();
+  });
+});
+
+describe("Account menu", () => {
+  it("opens from the avatar instead of signing out, and closes with Escape or an outside click", async () => {
+    mockApi(routes());
+    const user = await signIn();
+    const button = screen.getByRole("button", { name: "Account menu" });
+    expect(button).toHaveAttribute("aria-haspopup", "menu");
+    await user.click(button);
+    // Opening never signs out; it shows the menu with focus on its first item.
+    const menu = screen.getByRole("menu", { name: "Account" });
+    expect(button).toHaveAttribute("aria-expanded", "true");
+    expect(within(menu).getByText("admin@realmstack.local")).toBeInTheDocument();
+    expect(within(menu).getByRole("menuitem", { name: "Settings" })).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
+    expect(within(menu).getByRole("menuitem", { name: "Log out" })).toHaveFocus();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(button).toHaveFocus();
+    expect(screen.getByRole("heading", { name: "Star Forge" })).toBeInTheDocument();
+
+    await user.click(button);
+    await user.click(screen.getByRole("heading", { name: "Star Forge" }));
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("opens Settings, and logs out only from Log out", async () => {
+    const server = mockApi(routes());
+    const user = await signIn();
+    await user.click(screen.getByRole("button", { name: "Account menu" }));
+    await user.click(screen.getByRole("menuitem", { name: "Settings" }));
+    expect(await screen.findByRole("heading", { name: "Project settings" })).toBeInTheDocument();
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(server.find("POST", "/v1/auth/logout")).toHaveLength(0);
+
+    await user.click(screen.getByRole("button", { name: "Account menu" }));
+    await user.click(screen.getByRole("menuitem", { name: "Log out" }));
+    expect(await screen.findByRole("button", { name: /sign in/i })).toBeInTheDocument();
+    await waitFor(() => expect(server.find("POST", "/v1/auth/logout")).toHaveLength(1));
   });
 });

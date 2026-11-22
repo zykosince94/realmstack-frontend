@@ -43,15 +43,15 @@ export default function AIAssistant() {
       <PageTitle eyebrow="ASSISTANT" title="AI assistant" description={intro}
         actions={<>
           {data?.configured && <ProviderChip settings={data} />}
-          <button className="button secondary" onClick={() => w.openScreen("settings")}><Settings2 size={14} /> Provider settings</button>
+          <button className="button secondary" onClick={() => w.openScreen("settings")}><Settings2 size={16} /> Provider settings</button>
         </>} />
       {settings.isPending ? <p className="empty-text">Loading AI settings…</p> : data ? (
         <>
           {!data.configured && (
             <div className="ai-connect" role="status">
-              <div className="demo-illustration"><Sparkles size={18} /></div>
+              <div className="demo-illustration"><Sparkles size={20} /></div>
               <div><b>Connect an AI provider to start</b><p>Add an OpenAI key, or any OpenAI-compatible service such as OpenRouter, in Project settings. The key is encrypted and only your configuration draft is ever sent.</p></div>
-              <button className="button primary" onClick={() => w.openScreen("settings")}>Open settings <ArrowRight size={14} /></button>
+              <button className="button primary" onClick={() => w.openScreen("settings")}>Open settings <ArrowRight size={16} /></button>
             </div>
           )}
           <Workspace configured={data.configured} />
@@ -137,14 +137,14 @@ function Workspace({ configured }: { configured: boolean }) {
   return (
     <div className="ai-layout">
       <div className="ai-side">
-        <Panel title="New proposal" subtitle={operation.description} icon={<Sparkles size={18} />} className="ai-composer">
+        <Panel title="New proposal" subtitle={operation.description} icon={<Sparkles size={20} />} className="ai-composer">
           <form className="stack-form" onSubmit={(event) => { event.preventDefault(); void generate(); }}>
             <div className="op-grid" role="radiogroup" aria-label="What to generate">
               {operations.map((o) => {
                 const Icon = operationIcons[o.id];
                 return (
                   <button key={o.id} type="button" role="radio" aria-checked={o.id === op} className={`op-tile ${o.id === op ? "selected" : ""}`} onClick={() => setOp(o.id)}>
-                    <Icon size={14} /><span>{o.label}</span>
+                    <Icon size={16} /><span>{o.label}</span>
                   </button>
                 );
               })}
@@ -166,10 +166,10 @@ function Workspace({ configured }: { configured: boolean }) {
                 </select>
               </label>
             )}
-            <button className="button primary wide" disabled={w.busy || !configured || !draft.data} title={configured ? "" : "Connect a provider in Project settings first"}><Sparkles size={15} /> Generate</button>
+            <button className="button primary wide" disabled={w.busy || !configured || !draft.data} title={configured ? "" : "Connect a provider in Project settings first"}><Sparkles size={17} /> Generate</button>
           </form>
         </Panel>
-        <Panel title="History" subtitle="Recent generations in this environment." icon={<History size={18} />} className="ai-history">
+        <Panel title="History" subtitle="Recent generations in this environment." icon={<History size={20} />} className="ai-history">
           {history.isPending ? <p className="empty-text">Loading…</p>
             : items.length === 0 ? <p className="empty-text">Nothing generated yet.</p>
             : <ul className="generation-history">{items.map((g) => (
@@ -199,7 +199,7 @@ function ReviewPlaceholder({ configured }: { configured: boolean }) {
   ];
   return (
     <section className="panel ai-placeholder" aria-label="Review">
-      <div className="ai-placeholder-head"><Sparkles size={20} /><div><h3>Proposals appear here for review</h3>
+      <div className="ai-placeholder-head"><Sparkles size={22} /><div><h3>Proposals appear here for review</h3>
         <p>{configured ? "Generate one on the left, or pick a past generation from History." : "Connect a provider in Project settings, then generate your first proposal."}</p></div></div>
       <ol className="ai-steps">{steps.map(([title, text], i) => <li key={title}><span>{i + 1}</span><div><b>{title}</b><small>{text}</small></div></li>)}</ol>
     </section>

@@ -12,7 +12,7 @@ describe("dashboard session", () => {
     const server = mockApi(routes({ "POST /v1/auth/refresh": { body: session } }));
     renderApp();
     expect(await screen.findByRole("heading", { name: "Star Forge" })).toBeInTheDocument();
-    expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Email or username")).not.toBeInTheDocument();
     // The restored access token is the one used for API calls.
     await waitFor(() => expect(server.find("GET", "/v1/projects")[0]?.headers.Authorization).toBe("Bearer restored-token"));
   });
@@ -39,7 +39,7 @@ describe("dashboard session", () => {
     }));
     const user = userEvent.setup();
     renderApp();
-    await screen.findByLabelText("Email address");
+    await screen.findByLabelText("Email or username");
     // Signed in, but the first request finds the token expired; the cookie still works.
     refreshed = true;
     await user.click(screen.getByRole("button", { name: /sign in/i }));
@@ -52,7 +52,7 @@ describe("dashboard session", () => {
     const server = mockApi(routes());
     const user = await signIn();
     await user.click(screen.getAllByTitle("Sign out")[0]);
-    expect(await screen.findByLabelText("Email address")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Email or username")).toBeInTheDocument();
     await waitFor(() => expect(server.find("POST", "/v1/auth/logout")).toHaveLength(1));
   });
 });

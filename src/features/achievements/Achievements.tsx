@@ -83,12 +83,12 @@ export function Achievements() {
     <>
       <PageTitle eyebrow="GOALS" title="Achievements" description="Permanent, passive goals. They complete when their conditions are met and can be claimed once per player. Progress is computed from the ledgers; rewards paid by claims never count toward other goals. A player's progress and claims are in Players."
         actions={<>
-          <button className="button secondary" disabled={w.busy || !draft.data} onClick={() => select("new")}><Plus size={15} /> New achievement</button>
-          <button className="button primary" disabled={w.busy || !draft.data} onClick={() => void publish()}><Rocket size={15} /> Publish</button>
+          <button className="button secondary" disabled={w.busy || !draft.data} onClick={() => select("new")}><Plus size={17} /> New achievement</button>
+          <button className="button primary" disabled={w.busy || !draft.data} onClick={() => void publish()}><Rocket size={17} /> Publish</button>
         </>} />
       {errors.length > 0 && (
         <div className="issue-bar" role="status">
-          <AlertTriangle size={16} /><b>{errors.length} validation issue{errors.length === 1 ? "" : "s"} in the draft</b>
+          <AlertTriangle size={18} /><b>{errors.length} validation issue{errors.length === 1 ? "" : "s"} in the draft</b>
           <ul>{errors.slice(0, 6).map((e) => {
             const match = /^achievements\[(\d+)\]/.exec(e.field);
             return <li key={e.field}>{match ? <button className="link-button" onClick={() => select(Number(match[1]))}>{e.field}</button> : <code>{e.field}</code>} {e.message}</li>;
@@ -99,12 +99,12 @@ export function Achievements() {
       <div className={`editor-layout ${editing ? "with-panel" : ""}`}>
         <div>
           {draft.isPending ? <p className="empty-text">Loading achievements…</p>
-            : definitions.length === 0 ? <div className="empty-inline"><Award size={21} /><p>No achievements yet. Add one, or define stats and flags first so conditions can track game-world events.</p></div>
+            : definitions.length === 0 ? <div className="empty-inline"><Award size={23} /><p>No achievements yet. Add one, or define stats and flags first so conditions can track game-world events.</p></div>
             : <div className="card-grid">{definitions.map((a, index) => {
               return (
                 <article key={a.key} className={`achievement-card ${selected === index ? "selected" : ""} ${withErrors.has(index) ? "has-issues" : ""}`}>
                   <button className="card-select" onClick={() => select(index)} aria-label={`Edit ${a.name}`}>
-                    <div className="card-top"><Award size={18} /><b>{a.name}</b>{a.hidden && <span className="badge" title="Hidden until completed"><EyeOff size={12} /> hidden</span>}{a.claimable_by === "server" && <span className="badge" title="Only the game server can claim"><Server size={12} /> server</span>}</div>
+                    <div className="card-top"><Award size={20} /><b>{a.name}</b>{a.hidden && <span className="badge" title="Hidden until completed"><EyeOff size={14} /> hidden</span>}{a.claimable_by === "server" && <span className="badge" title="Only the game server can claim"><Server size={14} /> server</span>}</div>
                     <small className="card-key">{a.key}{withErrors.has(index) && <span className="issue-dot"> · has issues</span>}</small>
                     {a.description && <p>{a.description}</p>}
                     <ul className="condition-list">{a.conditions.map((c, i) => <li key={i}>{describeCondition(c)}</li>)}</ul>

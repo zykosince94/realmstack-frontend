@@ -30,7 +30,7 @@ export function ProjectsEmpty({ token, busy, run, onCreated }: Props) {
       <form className="inline-create" onSubmit={(event) => { event.preventDefault(); void run(async () => onCreated(await createProject(token, name, slug))); }}>
         <label>Project name<input value={name} onChange={(event) => setName(event.target.value)} required /></label>
         <label>Project slug<input value={slug} onChange={(event) => setSlug(event.target.value)} required /></label>
-        <button className="button primary" disabled={busy}><Plus size={16} /> Create project</button>
+        <button className="button primary" disabled={busy}><Plus size={18} /> Create project</button>
       </form>
     </div>
   );
@@ -42,14 +42,14 @@ export function CreateProjectModal({ token, busy, run, onCreated, onClose }: Pro
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="create-project-title">
-        <button className="icon-button modal-close" aria-label="Close dialog" onClick={onClose}><X size={17} /></button>
+        <button className="icon-button modal-close" aria-label="Close dialog" onClick={onClose}><X size={19} /></button>
         <div className="eyebrow">NEW TENANT</div>
         <h2 id="create-project-title">Create a game project</h2>
         <p className="subtle">A development environment will be created for the project.</p>
         <form className="stack-form" onSubmit={(event) => { event.preventDefault(); void run(async () => onCreated(await createProject(token, name, slug))); }}>
           <label>Project name<input value={name} onChange={(event) => { setName(event.target.value); setSlug(slugify(event.target.value)); }} required /></label>
           <label>Project slug<input value={slug} onChange={(event) => setSlug(event.target.value)} required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" /></label>
-          <div className="button-row"><button type="button" className="button secondary" onClick={onClose}>Cancel</button><button className="button primary" disabled={busy}><Plus size={15} /> Create project</button></div>
+          <div className="button-row"><button type="button" className="button secondary" onClick={onClose}>Cancel</button><button className="button primary" disabled={busy}><Plus size={17} /> Create project</button></div>
         </form>
       </section>
     </div>

@@ -15,7 +15,7 @@ export function AIProviderPanel() {
   useReportError(disabled ? null : settings.error, "Could not load AI settings.");
   if (disabled) {
     return (
-      <Panel title="AI provider" subtitle="Bring your own key for the AI assistant." icon={<PowerOff size={18} />}>
+      <Panel title="AI provider" subtitle="Bring your own key for the AI assistant." icon={<PowerOff size={20} />}>
         <p className="empty-text">AI is turned off on this deployment: the server has no <code>AI_ENCRYPTION_KEY</code>, so provider keys cannot be stored safely. Every other feature works without it.</p>
       </Panel>
     );

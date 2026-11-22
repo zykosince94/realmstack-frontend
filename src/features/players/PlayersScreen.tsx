@@ -38,9 +38,9 @@ export function PlayersScreen() {
     <>
       <PageTitle eyebrow="PLAYER SUPPORT" title="Players" description="Look up the players of this environment, see what the game knows about them and manage them: grant items and currency, award XP, submit scores, adjust stats and flags, claim achievements, run quests, repair cloud saves and ban or unban them." />
       <div className="players-layout">
-        <Panel title="Directory" subtitle={`Players in ${w.environment.name}, newest first.`} icon={<Users size={18} />} className="players-directory">
+        <Panel title="Directory" subtitle={`Players in ${w.environment.name}, newest first.`} icon={<Users size={20} />} className="players-directory">
           <label className="search-field"><span className="sr-only">Search players</span>
-            <Search size={15} aria-hidden="true" />
+            <Search size={17} aria-hidden="true" />
             <input type="search" value={typed} onChange={(event) => setTyped(event.target.value)} placeholder="Name, email, external key or player ID" aria-label="Search players" />
           </label>
           <label className="checkbox"><input type="checkbox" checked={bannedOnly} onChange={(event) => setBannedOnly(event.target.checked)} /> Banned players only</label>
@@ -61,7 +61,7 @@ export function PlayersScreen() {
         <div className="players-detail">
           {selected ? <PlayerDetail key={selected} playerId={selected} /> : (
             <section className="panel player-placeholder" aria-label="Player details">
-              <UserRound size={22} />
+              <UserRound size={24} />
               <h3>Select a player</h3>
               <p>Pick someone from the directory to see their profile and manage their inventory, balances, progress, stats, achievements and quests.</p>
             </section>
@@ -118,7 +118,7 @@ function PlayerDetail({ playerId }: { playerId: string }) {
       </div>
       {p.ban && (
         <p className="ban-banner" role="status">
-          <ShieldBan size={15} aria-hidden="true" />
+          <ShieldBan size={17} aria-hidden="true" />
           <span><b>Banned {p.ban.expires_at ? `until ${dateTime(p.ban.expires_at)}` : "permanently"}.</b> {p.ban.reason}</span>
         </p>
       )}
@@ -129,12 +129,12 @@ function PlayerDetail({ playerId }: { playerId: string }) {
       </dl>
       <div className="player-tiles">
         <div className="player-tile"><small>Level</small><b>{prog?.level ?? "–"}</b><span>{prog ? `${prog.total_xp.toLocaleString()} XP${next ? ` · ${(next - prog.total_xp).toLocaleString()} to next` : ""}` : "…"}</span></div>
-        {(currency.data ?? []).map((c) => <div className="player-tile" key={c.currency_key}><small><Coins size={12} /> {c.name}</small><b>{c.balance.toLocaleString()}</b><span><code>{c.currency_key}</code></span></div>)}
+        {(currency.data ?? []).map((c) => <div className="player-tile" key={c.currency_key}><small><Coins size={14} /> {c.name}</small><b>{c.balance.toLocaleString()}</b><span><code>{c.currency_key}</code></span></div>)}
       </div>
       {Object.keys(p.metadata ?? {}).length > 0 && <details className="generation-json"><summary>Profile metadata</summary><pre>{JSON.stringify(p.metadata, null, 2)}</pre></details>}
       <div className="player-tabs" role="tablist" aria-label="Player data">
         {tabs.map(({ id, label, icon: Icon }) => (
-          <button key={id} role="tab" aria-selected={tab === id} className={`player-tab ${tab === id ? "selected" : ""}`} onClick={() => setTab(id)}><Icon size={14} /> {label}</button>
+          <button key={id} role="tab" aria-selected={tab === id} className={`player-tab ${tab === id ? "selected" : ""}`} onClick={() => setTab(id)}><Icon size={16} /> {label}</button>
         ))}
       </div>
       <div role="tabpanel" className="player-tabpanel">

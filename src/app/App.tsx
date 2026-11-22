@@ -1,10 +1,12 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, Award, Boxes, Flag, FlaskConical, Gamepad2, LayoutDashboard, LogOut, Plus, ScrollText, ShieldCheck, Sparkles, Trophy, Users, Wallet } from "lucide-react";
+import { Activity, Award, Boxes, Flag, FlaskConical, LayoutDashboard, LogOut, Plus, ScrollText, ShieldCheck, Sparkles, Trophy, Users, Wallet } from "lucide-react";
 import { authHeaders, client, unwrap } from "../api/client";
 import { describeError, isExpiredSession } from "../api/errors";
 import type { Environment, Project } from "../api/types";
 import { AppFooter, NoticeView } from "../components/ui";
+import { BrandLogo, BrandWatermark } from "../components/Brand";
+import { UserMenu } from "./UserMenu";
 import { keys } from "../hooks/queries";
 import { WorkspaceContext, type Notice, type ScreenId, type Workspace } from "./workspace";
 import { LoginScreen } from "../features/auth/LoginScreen";
@@ -208,17 +210,17 @@ export function App() {
     busy, run, notify: setNotice, reportError,
   } : null, [token, project, environment, environments, selectProject, setEnvironments, run, queryClient, demoPlayerId, demoPlayerToken, busy, reportError, setScreen]);
 
-  async function authenticate(mode: "login" | "register", email: string, password: string) {
+  async function authenticate(email: string, password: string) {
     await run(async () => {
-      const session = await unwrap(mode === "login"
-        ? client.POST("/v1/auth/login", { body: { email, password } })
-        : client.POST("/v1/auth/register", { body: { email, password } }));
+      // The dashboard only signs in. Accounts are created through POST /v1/auth/register
+      // (the API still offers it); there is deliberately no sign-up form here.
+      const session = await unwrap(client.POST("/v1/auth/login", { body: { email, password } }));
       startSession(session);
-      setNotice({ kind: "success", message: mode === "login" ? "Welcome back." : "Account created." });
+      setNotice({ kind: "success", message: "Welcome back." });
     });
   }
 
-  if (restoring) return <div className="boot-screen" role="status"><Gamepad2 size={22} /> Restoring your session…</div>;
+  if (restoring) return <div className="boot-screen" role="status"><BrandLogo size={30} /> Restoring your session…</div>;
   if (!token) return <LoginScreen busy={busy} notice={notice} onDismiss={() => setNotice(null)} onAuthenticate={authenticate} />;
 
   const email = user?.email ?? "";
@@ -226,17 +228,17 @@ export function App() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand"><span className="brand-mark"><Gamepad2 size={19} /></span> REALMSTACK</div>
+        <div className="brand"><BrandLogo size={32} /> REALMSTACK</div>
         <div className="workspace-label">WORKSPACE</div>
         <nav className="main-nav">
           {screens.map(({ id, label, icon: Icon }) => (
             <button key={id} className={`nav-item ${screen === id ? "active" : ""}`} onClick={() => setScreen(id)}>
-              <Icon size={17} strokeWidth={1.8} /><span>{label}</span>{screen === id && <span className="nav-indicator" />}
+              <Icon size={19} strokeWidth={1.8} /><span>{label}</span>{screen === id && <span className="nav-indicator" />}
             </button>
           ))}
         </nav>
         <div className="sidebar-bottom">
-          <div className="user-card"><div className="avatar">{email.slice(0, 1).toUpperCase()}</div><div className="user-meta"><b>{email}</b><small>Workspace owner</small></div><button className="icon-button" title="Sign out" onClick={() => signOut()}><LogOut size={16} /></button></div>
+          <div className="user-card"><div className="avatar">{email.slice(0, 1).toUpperCase()}</div><div className="user-meta"><b>{email}</b><small>Workspace owner</small></div><button className="icon-button" title="Sign out" onClick={() => signOut()}><LogOut size={18} /></button></div>
           <div className="version">REALMSTACK <span>•</span> DEVELOPER CONSOLE</div>
         </div>
       </aside>
@@ -244,10 +246,10 @@ export function App() {
         <header className="topbar">
           <div className="crumb"><span>Projects</span><span className="slash">/</span><b>{project?.name ?? "Select a project"}</b></div>
           <div className="top-actions">
-            {project && <button className="button secondary" onClick={() => setCreatingProject(true)}><Plus size={14} /> New project</button>}
+            {project && <button className="button secondary" onClick={() => setCreatingProject(true)}><Plus size={16} /> New project</button>}
             {projects.length > 0 && <select aria-label="Project" value={project?.id ?? ""} onChange={(event) => setProjectId(event.target.value)}>{projects.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select>}
             {environments.length > 0 && <select aria-label="Environment" value={environment?.id ?? ""} onChange={(event) => setEnvironmentId(event.target.value)}>{environments.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select>}
-            <button className="icon-button top-avatar" title="Sign out" onClick={() => signOut()}>{email.slice(0, 1).toUpperCase()}</button>
+            <UserMenu email={email} onSettings={() => setScreen("settings")} onSignOut={() => signOut()} />
           </div>
         </header>
         {creatingProject && <CreateProjectModal token={token} busy={busy} run={run} onClose={() => setCreatingProject(false)} onCreated={(created) => { selectProject(created); setCreatingProject(false); }} />}
@@ -256,11 +258,13 @@ export function App() {
           {projectsQuery.isPending ? <p className="empty-text">Loading projects…</p>
             : !project ? <ProjectsEmpty token={token} busy={busy} run={run} onCreated={selectProject} />
             : !environment ? (environmentsQuery.isPending ? <p className="empty-text">Loading environments…</p>
-              : <div className="empty-card"><div className="empty-icon"><Boxes /></div><h2>Choose an environment</h2><p>This project does not have an environment yet.</p><button className="button primary" disabled={busy} onClick={() => void run(async () => { const created = await unwrap(client.POST("/v1/projects/{projectId}/environments", { params: { path: { projectId: project.id } }, body: { name: "development" }, headers: authHeaders({ token }) }), token); setEnvironments([created]); setEnvironmentId(created.id); })}><Plus size={16} /> Create development environment</button></div>)
+              : <div className="empty-card"><div className="empty-icon"><Boxes /></div><h2>Choose an environment</h2><p>This project does not have an environment yet.</p><button className="button primary" disabled={busy} onClick={() => void run(async () => { const created = await unwrap(client.POST("/v1/projects/{projectId}/environments", { params: { path: { projectId: project.id } }, body: { name: "development" }, headers: authHeaders({ token }) }), token); setEnvironments([created]); setEnvironmentId(created.id); })}><Plus size={18} /> Create development environment</button></div>)
             : <WorkspaceContext.Provider value={workspace}><Suspense fallback={<p className="empty-text">Loading…</p>}><Active /></Suspense></WorkspaceContext.Provider>}
         </div>
-        <AppFooter />
       </main>
+      {/* Spans the sidebar and the main area, below both; only the main area scrolls. */}
+      <AppFooter />
+      <BrandWatermark />
     </div>
   );
 }

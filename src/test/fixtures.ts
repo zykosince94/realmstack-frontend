@@ -55,7 +55,7 @@ export async function signIn() {
   const user = userEvent.setup();
   renderApp();
   // In development builds the demo credentials are prefilled.
-  expect(await screen.findByLabelText("Email address")).toHaveValue("admin@realmstack.local");
+  expect(await screen.findByLabelText("Email or username")).toHaveValue("admin@realmstack.local");
   await user.click(screen.getByRole("button", { name: /sign in/i }));
   await screen.findByRole("heading", { name: "Star Forge" });
   return user;

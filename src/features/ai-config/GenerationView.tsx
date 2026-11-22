@@ -31,8 +31,8 @@ export function GenerationView({ generation: g, draft, busy, published, onApply,
         </div>
       </div>
       <div className="generation-body">
-      {running && <p className="generation-running" role="status"><Loader2 size={16} className="spin" /> Generating… this can take a minute. You can leave this screen; it keeps running.</p>}
-      {g.error && <div className="notice error" role="alert"><span><X size={16} /></span>{g.error.message} <code>{g.error.code}</code></div>}
+      {running && <p className="generation-running" role="status"><Loader2 size={18} className="spin" /> Generating… this can take a minute. You can leave this screen; it keeps running.</p>}
+      {g.error && <div className="notice error" role="alert"><span><X size={18} /></span>{g.error.message} <code>{g.error.code}</code></div>}
       {g.notes && <p className="generation-notes">{g.notes}</p>}
 
       {answer.text && <p className="generation-answer">{answer.text}</p>}
@@ -52,7 +52,7 @@ export function GenerationView({ generation: g, draft, busy, published, onApply,
 
       {g.errors.length > 0 && (
         <div className="issue-bar" role="status">
-          <AlertTriangle size={16} /><b>This proposal can't be applied: {g.errors.length} validation issue{g.errors.length === 1 ? "" : "s"}</b>
+          <AlertTriangle size={18} /><b>This proposal can't be applied: {g.errors.length} validation issue{g.errors.length === 1 ? "" : "s"}</b>
           <ul>{g.errors.slice(0, 12).map((e) => <li key={e.field}><code>{e.field}</code> {e.message}</li>)}</ul>
         </div>
       )}
@@ -63,8 +63,8 @@ export function GenerationView({ generation: g, draft, busy, published, onApply,
       {(finished || g.status === "applied") && (
         <div className="generation-footer">
           <div className="button-row">
-            {g.status === "valid" && <button className="button primary" disabled={busy} onClick={onApply}><Check size={15} /> Apply to draft</button>}
-            {g.status === "applied" && !published && <button className="button primary" disabled={busy} onClick={onPublish}><Rocket size={15} /> Publish draft</button>}
+            {g.status === "valid" && <button className="button primary" disabled={busy} onClick={onApply}><Check size={17} /> Apply to draft</button>}
+            {g.status === "applied" && !published && <button className="button primary" disabled={busy} onClick={onPublish}><Rocket size={17} /> Publish draft</button>}
             {finished && <button className="button secondary" disabled={busy} onClick={onDiscard}>Discard</button>}
           </div>
           {g.status === "valid" && <p className="small-note">Applying changes only the draft. Nothing reaches players until you publish.</p>}

@@ -49,18 +49,18 @@ export function StatsScreen() {
   return (
     <>
       <PageTitle eyebrow="GAME-WORLD EVENTS" title="Stats & flags" description="RealmStack cannot see enemies defeated or NPCs met, so your game server reports them: counters only go up and flags are set-only. To set one for a player by hand, open the player in Players."
-        actions={<button className="button primary" disabled={w.busy || !draft.data} onClick={() => void publish()}><Rocket size={15} /> Publish</button>} />
-      <Panel title="Definitions" subtitle="The draft's stats array. Live means published." icon={<Hash size={18} />}>
+        actions={<button className="button primary" disabled={w.busy || !draft.data} onClick={() => void publish()}><Rocket size={17} /> Publish</button>} />
+      <Panel title="Definitions" subtitle="The draft's stats array. Live means published." icon={<Hash size={20} />}>
           {draft.isPending ? <p className="empty-text">Loading draft…</p> : definitions.length === 0 ? <p className="empty-text">No stats or flags yet.</p> : (
             <div className="table-wrap"><table><thead><tr><th>Key</th><th>Name</th><th>Kind</th><th>Status</th><th /></tr></thead><tbody>
-              {definitions.map((s) => <tr key={s.key}><td><code>{s.key}</code></td><td>{s.name}</td><td>{s.kind === "flag" ? <><Flag size={12} /> flag</> : <><Hash size={12} /> counter</>}</td><td>{liveKeys.has(s.key) ? "live" : "draft only"}</td><td><button className="icon-button" aria-label={`Remove ${s.key}`} disabled={w.busy} onClick={() => void remove(s.key)}><Trash2 size={14} /></button></td></tr>)}
+              {definitions.map((s) => <tr key={s.key}><td><code>{s.key}</code></td><td>{s.name}</td><td>{s.kind === "flag" ? <><Flag size={14} /> flag</> : <><Hash size={14} /> counter</>}</td><td>{liveKeys.has(s.key) ? "live" : "draft only"}</td><td><button className="icon-button" aria-label={`Remove ${s.key}`} disabled={w.busy} onClick={() => void remove(s.key)}><Trash2 size={16} /></button></td></tr>)}
             </tbody></table></div>
           )}
           <form className="stack-form compact" onSubmit={(event) => { event.preventDefault(); void add(); }}>
             <label>Key<input value={key} onChange={(event) => setKey(event.target.value)} placeholder="trolls_defeated" required /></label>
             <label>Name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Trolls defeated" required /></label>
             <label>Kind<select value={kind} onChange={(event) => setKind(event.target.value as "counter" | "flag")}><option value="counter">Counter (goes up)</option><option value="flag">Flag (set once)</option></select></label>
-            <button className="button secondary" disabled={w.busy || !draft.data}><Plus size={15} /> Add to draft</button>
+            <button className="button secondary" disabled={w.busy || !draft.data}><Plus size={17} /> Add to draft</button>
           </form>
       </Panel>
     </>

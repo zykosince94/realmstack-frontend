@@ -36,7 +36,7 @@ export function AchievementEditor({ initial, isNew, catalog, issues, busy, onSav
   const unplaced = unplacedIssues(issues, visiblePaths(draft, isNew));
   return (
     <aside className="side-panel" aria-label="Achievement editor">
-      <div className="panel-heading"><div><h3>{isNew ? "New achievement" : draft.name || draft.key}</h3><p>{isNew ? "Saved to the draft; publish to make it live." : `Key ${draft.key}`}</p></div><button className="icon-button" aria-label="Close editor" onClick={onClose}><X size={17} /></button></div>
+      <div className="panel-heading"><div><h3>{isNew ? "New achievement" : draft.name || draft.key}</h3><p>{isNew ? "Saved to the draft; publish to make it live." : `Key ${draft.key}`}</p></div><button className="icon-button" aria-label="Close editor" onClick={onClose}><X size={19} /></button></div>
       {unplaced.length > 0 && <ul className="field-issue" role="alert">{unplaced.map(([path, message]) => <li key={path}>{path ? `${path}: ` : ""}{message}</li>)}</ul>}
       <form className="stack-form" onSubmit={(event) => { event.preventDefault(); onSave({ ...draft, rewards: cleanRewards(rewards) }); }}>
         {isNew && <label>Key<input value={draft.key} onChange={(event) => set({ key: event.target.value })} placeholder="troll_slayer" required {...issueProps(issues, "key", "ach-key")} /><FieldIssue id="ach-key" message={issues.key} /></label>}
@@ -59,7 +59,7 @@ export function AchievementEditor({ initial, isNew, catalog, issues, busy, onSav
             onChange={(next) => set({ conditions: conditions.map((c, i) => i === index ? next : c) })}
             onRemove={() => set({ conditions: conditions.filter((_, i) => i !== index) })} />
         ))}
-        <button type="button" className="button secondary small" disabled={conditions.length >= MAX_CONDITIONS} onClick={() => set({ conditions: [...conditions, defaultCondition("stat", { stat: catalog.counters[0]?.key })] })}><Plus size={14} /> Add condition</button>
+        <button type="button" className="button secondary small" disabled={conditions.length >= MAX_CONDITIONS} onClick={() => set({ conditions: [...conditions, defaultCondition("stat", { stat: catalog.counters[0]?.key })] })}><Plus size={16} /> Add condition</button>
         <h4>Rewards</h4>
         <RewardsEditor path="rewards" idPrefix="ach" rewards={rewards} catalog={catalog} issues={issues} onChange={(next) => set({ rewards: next })} />
         <div className="button-row">

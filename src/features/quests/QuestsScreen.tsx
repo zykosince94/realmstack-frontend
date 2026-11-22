@@ -164,14 +164,14 @@ export default function QuestsScreen() {
     <>
       <PageTitle eyebrow="GOALS" title="Quests" description="Active, staged goals. Players accept a quest, complete its stages in order and claim stage and completion rewards. Drag between nodes to add a prerequisite; drop a node in a lane to set its chain."
         actions={<>
-          {!narrow && <button className="button secondary" aria-pressed={listView} onClick={() => setListView(!listView)}>{listView ? <><Network size={15} /> Canvas</> : <><List size={15} /> List</>}</button>}
-          {!showList && <button className="button secondary" disabled={w.busy || !config || quests.length === 0} onClick={() => void arrange()}><LayoutGrid size={15} /> Auto-arrange</button>}
-          <button className="button secondary" disabled={w.busy || !config} onClick={() => select("new")}><Plus size={15} /> New quest</button>
-          <button className="button primary" disabled={w.busy || !config} onClick={() => void publish()}><Rocket size={15} /> Publish</button>
+          {!narrow && <button className="button secondary" aria-pressed={listView} onClick={() => setListView(!listView)}>{listView ? <><Network size={17} /> Canvas</> : <><List size={17} /> List</>}</button>}
+          {!showList && <button className="button secondary" disabled={w.busy || !config || quests.length === 0} onClick={() => void arrange()}><LayoutGrid size={17} /> Auto-arrange</button>}
+          <button className="button secondary" disabled={w.busy || !config} onClick={() => select("new")}><Plus size={17} /> New quest</button>
+          <button className="button primary" disabled={w.busy || !config} onClick={() => void publish()}><Rocket size={17} /> Publish</button>
         </>} />
       {errors.length > 0 && (
         <div className="issue-bar" role="status">
-          <AlertTriangle size={16} /><b>{errors.length} validation issue{errors.length === 1 ? "" : "s"} in the draft</b>
+          <AlertTriangle size={18} /><b>{errors.length} validation issue{errors.length === 1 ? "" : "s"} in the draft</b>
           <ul>{errors.slice(0, 8).map((e) => {
             const match = /^quests\[(\d+)\]/.exec(e.field);
             const key = match ? quests[Number(match[1])]?.key : undefined;
@@ -183,7 +183,7 @@ export default function QuestsScreen() {
       <div className={`editor-layout ${editing ? "with-panel" : ""}`}>
         <div>
           {draft.isPending ? <p className="empty-text">Loading quests…</p>
-            : quests.length === 0 ? <div className="empty-inline"><ScrollText size={21} /><p>No quests yet. Add one; define stats and flags first so stages can track what happens in the game.</p></div>
+            : quests.length === 0 ? <div className="empty-inline"><ScrollText size={23} /><p>No quests yet. Add one; define stats and flags first so stages can track what happens in the game.</p></div>
             : showList ? <QuestList {...shared} />
             : <QuestCanvas {...shared} layout={layout} onMove={onMove} onConnect={onConnect} onDisconnect={onDisconnect} onRejectConnection={onReject} />}
         </div>

@@ -29,7 +29,7 @@ export function QuestList({ quests, issueIndexes, selectedKey, stats, onEdit }: 
               return (
                 <article key={q.key} className={`quest-row ${selectedKey === q.key ? "selected" : ""} ${issueIndexes.has(index) ? "has-issues" : ""}`}>
                   <button type="button" className="card-select" onClick={() => onEdit(index)} aria-label={`Edit ${q.name}`}>
-                    <div className="card-top"><ScrollText size={16} /><b>{q.name}</b></div>
+                    <div className="card-top"><ScrollText size={18} /><b>{q.name}</b></div>
                     <small className="card-key">{q.key}{issueIndexes.has(index) && <span className="issue-dot"> · has issues</span>}</small>
                     <small>{q.stages.length} stage{q.stages.length === 1 ? "" : "s"}{schedule && ` · ${schedule}`}{(q.requires_quests ?? []).length > 0 && ` · after ${(q.requires_quests ?? []).join(", ")}`}</small>
                     <small>{rewardSummary(q.rewards)}{stat && ` · ${stat.accepted} accepted · ${stat.completions_claimed} completed`}</small>

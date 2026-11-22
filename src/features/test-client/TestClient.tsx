@@ -42,9 +42,9 @@ export function TestClient() {
   return (
     <>
       <PageTitle eyebrow="DEVELOPMENT TOOL" title="Test client" description="Act as your game while you build: sign in a test player exactly as a game client would, with the public environment ID. Registering here creates a player you can then find and manage in Players, where every player-side action lives." />
-      <div className="warning-note test-client-note"><FlaskConical size={15} /><span>This simulates a game client in the browser. A real game signs players in itself, and server credentials never reach a browser.</span></div>
+      <div className="warning-note test-client-note"><FlaskConical size={17} /><span>This simulates a game client in the browser. A real game signs players in itself, and server credentials never reach a browser.</span></div>
       <div className="two-column">
-        <Panel title="Test player sign-in" subtitle="Register or sign in a player with the public environment ID." icon={<UserRound size={18} />}>
+        <Panel title="Test player sign-in" subtitle="Register or sign in a player with the public environment ID." icon={<UserRound size={20} />}>
           <form className="stack-form" onSubmit={(event) => { event.preventDefault(); void playerAuth("register"); }}>
             <label>Display name<input value={displayName} onChange={(event) => setDisplayName(event.target.value)} /></label>
             <label>Email<input type="email" value={playerEmail} onChange={(event) => setPlayerEmail(event.target.value)} required /></label>
@@ -52,12 +52,12 @@ export function TestClient() {
             <div className="button-row"><button className="button primary" disabled={w.busy}>Register player</button><button type="button" className="button secondary" disabled={w.busy} onClick={() => void playerAuth("login")}>Sign in existing</button></div>
           </form>
         </Panel>
-        <Panel title="Signed-in test player" subtitle="Short-lived player access token, used by the other screens." icon={<ShieldCheck size={18} />}>
+        <Panel title="Signed-in test player" subtitle="Short-lived player access token, used by the other screens." icon={<ShieldCheck size={20} />}>
           {w.demoPlayerToken ? <>
-            <div className="player-profile"><div className="avatar big">{name.slice(0, 1).toUpperCase()}</div><div><b>{name}</b><small>{profile?.email ?? playerEmail}</small></div><span className="verified"><Check size={13} /> authenticated</span></div>
+            <div className="player-profile"><div className="avatar big">{name.slice(0, 1).toUpperCase()}</div><div><b>{name}</b><small>{profile?.email ?? playerEmail}</small></div><span className="verified"><Check size={15} /> authenticated</span></div>
             <div className="token-display"><span>PLAYER ID · ACCESS TOKEN</span><code>{w.demoPlayerId || "ID pending"}<br />{w.demoPlayerToken.slice(0, 20)}••••••••••••</code></div>
-            <div className="button-row"><button className="button secondary" onClick={() => void loadProfile()}>Refresh profile <RefreshCw size={14} /></button><button className="button ghost-danger" onClick={() => { w.setDemoPlayerToken(""); w.setDemoPlayerId(""); setProfile(null); }}>Sign out player</button></div>
-          </> : <div className="empty-inline"><UserRound size={21} /><p>Register or sign in a test player to try the player-facing APIs.</p></div>}
+            <div className="button-row"><button className="button secondary" onClick={() => void loadProfile()}>Refresh profile <RefreshCw size={16} /></button><button className="button ghost-danger" onClick={() => { w.setDemoPlayerToken(""); w.setDemoPlayerId(""); setProfile(null); }}>Sign out player</button></div>
+          </> : <div className="empty-inline"><UserRound size={23} /><p>Register or sign in a test player to try the player-facing APIs.</p></div>}
         </Panel>
       </div>
     </>

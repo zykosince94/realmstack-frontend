@@ -33,12 +33,12 @@ const QuestNode = memo(function QuestNode({ data }: NodeProps<QuestNodeType>) {
         <small>{quest.key}{data.hasIssues && <span className="issue-dot"> · has issues</span>}</small>
       </button>
       <div className="quest-node-meta" title="Drag to move; drop into a lane to set the chain">
-        <GripHorizontal size={12} aria-hidden="true" />
+        <GripHorizontal size={14} aria-hidden="true" />
         <span>{quest.stages.length} stage{quest.stages.length === 1 ? "" : "s"}</span>
-        {quest.repeat !== "none" && <span className="badge" title={`Repeats ${quest.repeat}`}><Repeat size={11} /> {quest.repeat}</span>}
-        {(quest.available_from || quest.available_until) && <span className="badge" title="Has an availability window"><Timer size={11} /> event</span>}
-        {quest.auto_accept && <span className="badge" title="Accepted automatically"><Sparkles size={11} /> auto</span>}
-        {quest.claimable_by === "server" && <span className="badge" title="Only the game server can claim"><Server size={11} /> server</span>}
+        {quest.repeat !== "none" && <span className="badge" title={`Repeats ${quest.repeat}`}><Repeat size={13} /> {quest.repeat}</span>}
+        {(quest.available_from || quest.available_until) && <span className="badge" title="Has an availability window"><Timer size={13} /> event</span>}
+        {quest.auto_accept && <span className="badge" title="Accepted automatically"><Sparkles size={13} /> auto</span>}
+        {quest.claimable_by === "server" && <span className="badge" title="Only the game server can claim"><Server size={13} /> server</span>}
       </div>
       {data.stat && <small className="quest-node-stats">{data.stat.accepted} accepted · {data.stat.completions_claimed} completed</small>}
       <Handle type="source" position={Position.Right} aria-label={`Quests that require ${quest.name}`} />

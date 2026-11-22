@@ -82,12 +82,12 @@ function StageCard({ sortId, index, count, stage, catalog, issues, onChange, onM
   return (
     <section ref={setNodeRef} className={`stage-card ${isDragging ? "dragging" : ""}`} style={{ transform: CSS.Transform.toString(transform), transition }} aria-label={`Stage ${n}`}>
       <div className="stage-head">
-        <button type="button" ref={setActivatorNodeRef} className="icon-button drag-handle" aria-label={`Drag stage ${n}`} {...attributes} {...listeners}><GripVertical size={15} /></button>
+        <button type="button" ref={setActivatorNodeRef} className="icon-button drag-handle" aria-label={`Drag stage ${n}`} {...attributes} {...listeners}><GripVertical size={17} /></button>
         <b>Stage {n}</b>
         <span className="stage-tools">
-          <button type="button" className="icon-button" aria-label={`Move stage ${n} up`} disabled={index === 0} onClick={() => onMove(index - 1)}><ArrowUp size={14} /></button>
-          <button type="button" className="icon-button" aria-label={`Move stage ${n} down`} disabled={index === count - 1} onClick={() => onMove(index + 1)}><ArrowDown size={14} /></button>
-          <button type="button" className="icon-button" aria-label={`Remove stage ${n}`} disabled={count === 1} onClick={onRemove}><Trash2 size={14} /></button>
+          <button type="button" className="icon-button" aria-label={`Move stage ${n} up`} disabled={index === 0} onClick={() => onMove(index - 1)}><ArrowUp size={16} /></button>
+          <button type="button" className="icon-button" aria-label={`Move stage ${n} down`} disabled={index === count - 1} onClick={() => onMove(index + 1)}><ArrowDown size={16} /></button>
+          <button type="button" className="icon-button" aria-label={`Remove stage ${n}`} disabled={count === 1} onClick={onRemove}><Trash2 size={16} /></button>
         </span>
       </div>
       <div className="two-fields">
@@ -101,7 +101,7 @@ function StageCard({ sortId, index, count, stage, catalog, issues, onChange, onM
           onRemove={() => onChange({ ...stage, conditions: stage.conditions.filter((_, k) => k !== j) })} />
       ))}
       <button type="button" className="button secondary small" aria-label={`Add condition to stage ${n}`} disabled={stage.conditions.length >= MAX_CONDITIONS}
-        onClick={() => onChange({ ...stage, conditions: [...stage.conditions, defaultCondition("stat", { stat: catalog.counters[0]?.key })] })}><Plus size={14} /> Condition</button>
+        onClick={() => onChange({ ...stage, conditions: [...stage.conditions, defaultCondition("stat", { stat: catalog.counters[0]?.key })] })}><Plus size={16} /> Condition</button>
       <details className="stage-rewards" open={Boolean(stage.rewards && (stage.rewards.items?.length || stage.rewards.currencies?.length || stage.rewards.xp))}>
         <summary>Stage {n} reward</summary>
         <RewardsEditor path={`${base}.rewards`} label={label} idPrefix="quest" rewards={stage.rewards ?? {}} catalog={catalog} issues={issues} onChange={(rewards) => onChange({ ...stage, rewards })} />
@@ -158,7 +158,7 @@ export function QuestEditor({ initial, isNew, quests, achievements, chains, cata
 
   return (
     <aside className="side-panel quest-panel" aria-label="Quest editor">
-      <div className="panel-heading"><div><h3>{isNew ? "New quest" : draft.name || draft.key}</h3><p>{isNew ? "Saved to the draft; publish to make it live." : `Key ${draft.key}`}</p></div><button className="icon-button" aria-label="Close editor" onClick={onClose}><X size={17} /></button></div>
+      <div className="panel-heading"><div><h3>{isNew ? "New quest" : draft.name || draft.key}</h3><p>{isNew ? "Saved to the draft; publish to make it live." : `Key ${draft.key}`}</p></div><button className="icon-button" aria-label="Close editor" onClick={onClose}><X size={19} /></button></div>
       {unplaced.length > 0 && <ul className="field-issue" role="alert">{unplaced.map(([path, message]) => <li key={path}>{path ? `${path}: ` : ""}{message}</li>)}</ul>}
       <form className="stack-form" onSubmit={(event) => { event.preventDefault(); submit(); }}>
         {isNew && <label>Key<input value={draft.key} onChange={(event) => set({ key: event.target.value })} placeholder="into_the_mine" required {...issueProps(issues, "key", id("key"))} /><FieldIssue id={id("key")} message={issues.key} /></label>}
@@ -219,7 +219,7 @@ export function QuestEditor({ initial, isNew, quests, achievements, chains, cata
         <button type="button" className="button secondary small" disabled={stages.length >= MAX_STAGES} onClick={() => {
           const n = stages.length + 1;
           setStages([...stages, { key: `stage_${n}`, name: `Stage ${n}`, conditions: [defaultCondition("flag", { flag: catalog.flags[0]?.key })] }], [...stageIds, `stage-${nextId.current++}`]);
-        }}><Plus size={14} /> Add stage</button>
+        }}><Plus size={16} /> Add stage</button>
 
         <h4>Completion reward</h4>
         <RewardsEditor path="rewards" label="Completion " idPrefix="quest" rewards={draft.rewards ?? {}} catalog={catalog} issues={issues} onChange={(rewards) => set({ rewards })} />

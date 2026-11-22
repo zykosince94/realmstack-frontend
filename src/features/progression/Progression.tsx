@@ -43,15 +43,15 @@ export function Progression() {
   }
   return (
     <>
-      <PageTitle eyebrow="PLAYER PROGRESSION" title="Progression" description="Publish a versioned cumulative XP curve. Existing player progression stays pinned to its original version. To award a player XP, open the player in Players." actions={<button className="button secondary" disabled={w.busy || !config} onClick={() => void publish()}><Rocket size={15} /> Publish configuration</button>} />
-      <Panel title="Level thresholds" subtitle="Thresholds are cumulative XP required to reach each level." icon={<Activity size={18} />}>
+      <PageTitle eyebrow="PLAYER PROGRESSION" title="Progression" description="Publish a versioned cumulative XP curve. Existing player progression stays pinned to its original version. To award a player XP, open the player in Players." actions={<button className="button secondary" disabled={w.busy || !config} onClick={() => void publish()}><Rocket size={17} /> Publish configuration</button>} />
+      <Panel title="Level thresholds" subtitle="Thresholds are cumulative XP required to reach each level." icon={<Activity size={20} />}>
           {!config ? <p className="empty-text">Loading draft…</p> : <>
             <label>Level thresholds<input value={thresholdText} onChange={(event) => setThresholdText(event.target.value)} placeholder="100, 300, 700" /></label>
             <div className="threshold-list">{thresholdText.split(",").map((value, index) => <div className="threshold-item" key={index}><span>LEVEL {index + 2}</span><b>{value.trim() || "—"} XP</b></div>)}</div>
             <div className="button-row"><button className="button primary" disabled={w.busy} onClick={() => void saveProgression()}>Save draft</button><span className="small-note">Enter increasing cumulative XP thresholds for levels 2+.</span></div>
           </>}
       </Panel>
-      <Panel title="Versioning rules" subtitle="Progression policy for this environment" icon={<ShieldCheck size={18} />}><div className="policy-grid"><div><b>New players</b><p>Use the latest published progression version on their first XP award.</p></div><div><b>Existing players</b><p>Remain pinned to the progression version assigned at their first award.</p></div><div><b>History</b><p>Published thresholds are immutable; changed thresholds create a new version.</p></div></div></Panel>
+      <Panel title="Versioning rules" subtitle="Progression policy for this environment" icon={<ShieldCheck size={20} />}><div className="policy-grid"><div><b>New players</b><p>Use the latest published progression version on their first XP award.</p></div><div><b>Existing players</b><p>Remain pinned to the progression version assigned at their first award.</p></div><div><b>History</b><p>Published thresholds are immutable; changed thresholds create a new version.</p></div></div></Panel>
     </>
   );
 }

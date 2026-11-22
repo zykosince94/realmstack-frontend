@@ -6,9 +6,9 @@ import type { Notice } from "../app/workspace";
 export function NoticeView({ notice, onDismiss }: { notice: Notice; onDismiss?: () => void }) {
   return (
     <div className={`notice ${notice.kind}`} role={notice.kind === "error" ? "alert" : "status"}>
-      <span>{notice.kind === "success" ? <Check size={16} /> : <X size={16} />}</span>
+      <span>{notice.kind === "success" ? <Check size={18} /> : <X size={18} />}</span>
       <span className="notice-text">{notice.message}</span>
-      {onDismiss && <button type="button" className="notice-close" aria-label="Dismiss" onClick={onDismiss}><X size={14} /></button>}
+      {onDismiss && <button type="button" className="notice-close" aria-label="Dismiss" onClick={onDismiss}><X size={16} /></button>}
     </div>
   );
 }
@@ -33,7 +33,7 @@ export function DataTable({ columns, rows, empty }: { columns: string[]; rows: s
 }
 
 export function NotPublished() {
-  return <div className="empty-inline"><Rocket size={21} /><p>Nothing is published in this environment yet. Publish the configuration in Project settings to use these services.</p></div>;
+  return <div className="empty-inline"><Rocket size={23} /><p>Nothing is published in this environment yet. Publish the configuration in Project settings to use these services.</p></div>;
 }
 
 export function Panel({ title, subtitle, icon, children, className = "" }: { title: string; subtitle?: string; icon?: ReactNode; children: ReactNode; className?: string }) {
