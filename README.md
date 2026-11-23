@@ -9,7 +9,7 @@
 
 **The control plane for a multi-tenant game backend — configure the economy, inspect players and ship live content without redeploying.**
 
-RealmStack is a multi-tenant backend for player identity, inventory, economy, progression, leaderboards, stats, achievements, quests, cloud saves and bans. This repository is the React dashboard and the integrated Docker Compose demo. The Go API lives in the [RealmStack backend repository](../realmstack-backend).
+RealmStack is a multi-tenant backend for player identity, inventory, economy, progression, leaderboards, stats, achievements, quests, cloud saves and bans. This repository is the React dashboard and the integrated Docker Compose demo. The Go API lives in the [RealmStack backend repository](https://github.com/zykosince94/realmstack).
 
 ![RealmStack dashboard showing player activity, concurrent players and daily active players](public/screenshots/dashboard.png)
 
